@@ -1,37 +1,35 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# LoadWise
 
-## Getting Started
+Academic load tracker, early-warning system and study planner (Next.js 16, React 19, Tailwind 4, JavaScript).
 
-First, run the development server:
+LoadWise is a frontend that talks to a separate backend API. See `docs/API_CONTRACT.md` for the endpoints, shapes and access rules the frontend expects. Without a backend URL the app shows "Backend not connected" and displays no data; it never fabricates any.
 
+## Setup
 ```bash
+npm install
+cp .env.example .env.local   # set NEXT_PUBLIC_API_BASE_URL
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Scripts
+- `npm run dev` / `npm run build` / `npm start`
+- `npm run lint`
+- `npm test`: unit tests for the workload, warning and planner engines and the calendar export
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## Features beyond the core MVP
+- **Calendar reminders:** `Add to calendar (.ics)` on the Calendar page (open deadlines, with a 1-day reminder and a 2-hour reminder for timed exams/tests) and on the Planner page (planned study sessions, 10-minute reminder). Times are local wall-clock times.
+- **Study plan as PDF:** Planner > `Print / Save as PDF` uses the browser print dialog with a print-specific layout (navigation and buttons hidden). It prints the week currently shown.
+- **PWA:** web app manifest, icons, and a service worker (production only) that caches static assets only and shows an offline page. It never caches API responses or signed-in pages.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Not built yet (needs backend support)
+Study material uploads and search, linking materials to sessions, course-rep updates to shared test/exam dates, departmental insights, server-sent email/push reminders, and workload trends over time (no history is stored). Dark mode is intentionally not included yet.
 
-## Learn More
+## Structure
+- `src/lib/engine`: pure, deterministic workload score, early-warning rules and study-plan scheduler. Documented in `docs/WORKLOAD_ENGINE.md`.
+- `src/lib/api/client.js`: the only place the frontend calls the backend.
+- `src/lib/auth.js`, `src/lib/store.js`: session and data state.
+- `src/components`: design system (`ui.js`), forms and shared pieces (`domain.js`), app shell.
+- `src/app`: landing, login/register, and the authenticated app (`(app)`): dashboard, courses, tasks, calendar, planner, insights, notifications, settings.
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# loadwise
+## Security note
+The route guard in the frontend is for user experience only. The backend must authenticate every request and scope all data to the signed-in user.
