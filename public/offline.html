@@ -1,8 +1,24 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Offline | LoadWise</title>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f1eee7"><title>Offline | LoadWise</title>
 <style>
-body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f4f5f8;color:#121c2b;font:16px/1.5 system-ui,sans-serif;padding:24px}
-main{max-width:26rem}h1{font-size:1.375rem;margin:0 0 .5rem}p{color:#55627a;margin:0 0 1rem}
-button{min-height:44px;padding:0 20px;border:0;border-radius:6px;background:#1f3f73;color:#fff;font:inherit;font-weight:500;cursor:pointer}
+:root{--bg:#f1eee7;--ink:#14181f;--muted:#565b64;--primary:#1f2f8a;--edge:#101a5c}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;padding:24px}
+main{max-width:28rem}
+svg{display:block;margin-bottom:2rem}
+.l{font:500 .6875rem/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 .5rem}
+h1{font:400 clamp(2.25rem,9vw,3.25rem)/1 "Iowan Old Style","Palatino Linotype",Georgia,serif;letter-spacing:-.02em;margin:0 0 1rem}
+p{color:var(--muted);margin:0 0 1.75rem}
+button{min-height:48px;padding:0 24px;border:0;border-radius:3px;background:var(--primary);color:#fff;font:inherit;font-weight:500;cursor:pointer;box-shadow:0 2px 0 var(--edge);transition:transform .15s,box-shadow .15s}
+button:hover{transform:translateY(-1px)}
+button:active{transform:translateY(2px);box-shadow:none}
+button:focus-visible{outline:2px solid var(--primary);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){button{transition:none}}
 </style></head>
-<body><main><h1>You are offline</h1><p>LoadWise needs a connection to load your courses, deadlines and plan. Your data is safe on the server. Reconnect and try again.</p><button onclick="location.reload()">Try again</button></main></body></html>
+<body><main>
+<svg width="40" height="40" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="4" fill="#14181f"/><rect x="5.4" y="21" width="2.5" height="6" fill="#eceae1"/><rect x="9.3" y="18.5" width="2.5" height="8.5" fill="#eceae1"/><rect x="13.2" y="16" width="2.5" height="11" fill="#eceae1"/><rect x="17.1" y="13" width="2.5" height="14" fill="#eceae1"/><rect x="21" y="9" width="2.5" height="18" fill="#eceae1"/><rect x="24.9" y="5" width="2.5" height="22" fill="#c6f04a"/></svg>
+<p class="l">No connection</p>
+<h1>You are offline.</h1>
+<p>LoadWise needs a connection to load your courses, deadlines and plan. Your data is safe on the server. Reconnect and try again.</p>
+<button type="button" onclick="location.reload()">Try again</button>
+</main></body></html>

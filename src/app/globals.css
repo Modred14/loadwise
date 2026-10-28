@@ -1,23 +1,68 @@
 @import "tailwindcss";
 
-/* LoadWise design tokens. Solid colours only: no gradients anywhere. */
+/* ==========================================================================
+   LoadWise design tokens
+   Identity: a precision instrument for academic load, set on warm paper.
+   Solid colours only. No gradients anywhere.
+   ========================================================================== */
 :root {
-  --bg: #f4f5f8;
-  --surface: #ffffff;
-  --surface-2: #f8f9fb;
-  --line: #dce1e9;
-  --ink: #121c2b;
-  --muted: #55627a;
-  --primary: #1f3f73;
-  --primary-hover: #183361;
-  --primary-soft: #e8eef8;
-  --ok: #1b6e44;
-  --ok-soft: #e3f3ea;
-  --warn: #85500a;
-  --warn-soft: #fcefd6;
-  --crit: #b3261e;
-  --crit-soft: #fcebea;
+  /* Paper & ink */
+  --bg: #f1eee7;
+  --surface: #fbfaf6;
+  --surface-2: #f4f1e9;
+  --line: #dad5c8;
+  --line-strong: #b9b2a0;
+  --ink: #14181f;
+  --muted: #565b64;
+
+  /* Brand: ultramarine, with its pressed edge colour */
+  --primary: #1f2f8a;
+  --primary-hover: #1a2778;
+  --primary-edge: #101a5c;
+  --primary-soft: #e3e6f5;
+  --signal: #c6f04a; /* only ever used on dark surfaces */
+
+  /* Semantic load colours (text-safe on their soft backgrounds) */
+  --ok: #1f6e4a;
+  --ok-soft: #dcefe3;
+  --warn: #7d4700;
+  --warn-soft: #f7e6c4;
+  --crit: #a8300f;
+  --crit-soft: #f8dcd2;
+
+  /* Zone colours used by the rail and charts */
+  --zone-low: #2f8a5f;
+  --zone-medium: #3d55c7;
+  --zone-high: #cf7a00;
+  --zone-critical: #d23d1c;
+
+  /* Dark instrument panel */
+  --panel: #12151c;
+  --panel-2: #1a1e27;
+  --panel-line: #2b303c;
+  --panel-ink: #eceae1;
+  --panel-muted: #a2a7b3;
+
+  --focus: #1f2f8a;
   --nav-h: 3.5rem;
+  --ctl-h: 2.25rem; /* desktop control height */
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+@media (pointer: coarse) {
+  :root { --ctl-h: 2.75rem; } /* touch targets >= 44px on any viewport width */
+}
+
+/* Dark surfaces re-map the tokens so every component works inside them. */
+.panel {
+  --muted: var(--panel-muted);
+  --line: var(--panel-line);
+  --focus: var(--signal);
+  --zone-low: #5fd69b;
+  --zone-medium: #8ea4ff;
+  --zone-high: #f2b04a;
+  --zone-critical: #ff7a5c;
+  background: var(--panel);
+  color: var(--panel-ink);
 }
 
 @theme inline {
@@ -25,51 +70,175 @@
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
   --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
+  --color-primary-edge: var(--primary-edge);
   --color-primary-soft: var(--primary-soft);
+  --color-signal: var(--signal);
   --color-ok: var(--ok);
   --color-ok-soft: var(--ok-soft);
   --color-warn: var(--warn);
   --color-warn-soft: var(--warn-soft);
   --color-crit: var(--crit);
   --color-crit-soft: var(--crit-soft);
+  --color-panel: var(--panel);
+  --color-panel-2: var(--panel-2);
+  --color-panel-ink: var(--panel-ink);
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-display: var(--font-instrument), "Iowan Old Style", Georgia, serif;
+  /* Near-square geometry: a deliberate choice, not a default. */
+  --radius-xs: 1px;
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
+  --radius-xl: 6px;
+  --shadow-key: 0 2px 0 var(--primary-edge);
+  --shadow-lift: 0 1px 0 rgb(20 24 31 / 0.04), 0 8px 24px -12px rgb(20 24 31 / 0.25);
 }
 
-html { background: var(--bg); color: var(--ink); scroll-padding-top: 4.5rem; scroll-padding-bottom: 6rem; }
+html {
+  background: var(--bg);
+  color: var(--ink);
+  scroll-padding-top: 4.5rem;
+  scroll-padding-bottom: 6rem;
+  -webkit-text-size-adjust: 100%;
+}
 @media (min-width: 1024px) { html { scroll-padding-top: 1rem; scroll-padding-bottom: 1rem; } }
 body { font-family: var(--font-sans); font-size: 15px; line-height: 1.5; overflow-x: hidden; }
-:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
+::selection { background: var(--primary); color: #fff; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 2px; }
 button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+button:not(:disabled), [role="button"], summary { cursor: pointer; }
 .tnum { font-variant-numeric: tabular-nums; }
 
-/* Type scale */
-.t-page { font-size: 1.375rem; line-height: 1.25; font-weight: 650; letter-spacing: -0.01em; }
-.t-section { font-size: 1rem; line-height: 1.3; font-weight: 600; }
-.t-label { font-size: 0.75rem; line-height: 1.2; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
-.t-small { font-size: 0.8125rem; line-height: 1.4; color: var(--muted); }
+/* --------------------------------------------------------------------------
+   Type scale
+   -------------------------------------------------------------------------- */
+@layer components {
+.font-display { font-family: var(--font-display); font-weight: 400; font-synthesis: none; }
+.t-display { font-family: var(--font-display); font-weight: 400; font-synthesis: none; letter-spacing: -0.02em; line-height: 0.98; }
+.t-page { font-family: var(--font-display); font-weight: 400; font-synthesis: none; font-size: 2.125rem; line-height: 1.05; letter-spacing: -0.015em; }
+@media (min-width: 1024px) { .t-page { font-size: 2.5rem; } }
+.t-section { font-family: var(--font-sans); font-size: 0.9375rem; line-height: 1.3; font-weight: 600; letter-spacing: -0.005em; }
+.t-label { font-family: var(--font-mono); font-size: 0.6875rem; line-height: 1.2; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.t-small { font-size: 0.8125rem; line-height: 1.45; color: var(--muted); }
+.t-num { font-family: var(--font-display); font-weight: 400; font-synthesis: none; font-variant-numeric: lining-nums tabular-nums; line-height: 0.9; letter-spacing: -0.02em; }
+}
 
-/* Motion (restrained; all disabled for reduced-motion) */
+/* --------------------------------------------------------------------------
+   Load rail: the signature instrument. 50 ticks, 2 points each; the ticks
+   carry the zone colours so thresholds are readable without labels.
+   -------------------------------------------------------------------------- */
+.rail { position: relative; display: flex; align-items: flex-end; gap: 1px; height: var(--rail-h, 2.5rem); }
+@media (min-width: 640px) { .rail { gap: 2px; } }
+.rail[data-count="50"] { gap: 2px; }
+.rail > i { flex: 1 1 0; min-width: 1px; height: 42%; background: color-mix(in srgb, var(--z) 26%, transparent); transform-origin: bottom; }
+.rail > i.m5 { height: 68%; }
+.rail > i.m10 { height: 100%; }
+.rail > i[data-on] { background: var(--z); animation: lw-tick 420ms var(--ease) backwards; animation-delay: calc(var(--i) * var(--step, 5ms)); }
+.rail [data-zone="low"] { --z: var(--zone-low); }
+.rail [data-zone="medium"] { --z: var(--zone-medium); }
+.rail [data-zone="high"] { --z: var(--zone-high); }
+.rail [data-zone="critical"] { --z: var(--zone-critical); }
+.rail-needle { position: absolute; top: -9px; bottom: 0; width: 0; left: calc(var(--p) * 1%); transition: left 700ms var(--ease); pointer-events: none; }
+.rail-needle::before { content: ""; position: absolute; top: 0; left: -5px; width: 10px; height: 7px; background: currentColor; clip-path: polygon(0 0, 100% 0, 50% 100%); }
+.rail-needle::after { content: ""; position: absolute; top: 7px; bottom: 0; left: -1px; width: 2px; background: currentColor; opacity: 0.9; }
+.rail-zones { position: relative; height: 1.1rem; margin-top: 0.4rem; }
+.rail-zones span { position: absolute; top: 0; font-family: var(--font-mono); font-size: 0.625rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+
+/* Small horizontal bar used in lists (solid fill, square ends) */
+.bar { position: relative; height: 6px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); overflow: hidden; }
+.bar > b { position: absolute; inset: 0 auto 0 0; background: var(--z, var(--primary)); transition: width 700ms var(--ease); }
+.bar[data-zone="low"] { --z: var(--zone-low); } .bar[data-zone="medium"] { --z: var(--zone-medium); }
+.bar[data-zone="high"] { --z: var(--zone-high); } .bar[data-zone="critical"] { --z: var(--zone-critical); }
+
+/* --------------------------------------------------------------------------
+   Surfaces & details
+   -------------------------------------------------------------------------- */
+.ledger-row { transition: background-color 140ms ease; }
+.ledger-row:hover { background: color-mix(in srgb, var(--primary) 4%, transparent); }
+.paper-lift { transition: transform 180ms var(--ease), box-shadow 180ms var(--ease), border-color 180ms ease; }
+.paper-lift:hover { transform: translateY(-1px); box-shadow: var(--shadow-lift); border-color: var(--line-strong); }
+.course-mark { background: var(--c, var(--primary)); }
+.scroll-x { overflow-x: auto; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
+.snap-x { scroll-snap-type: x mandatory; } .snap-x > * { scroll-snap-align: start; }
+.no-scrollbar { scrollbar-width: none; } .no-scrollbar::-webkit-scrollbar { display: none; }
+input[type="date"], input[type="time"] { min-width: 0; }
+select { appearance: none; }
+details > summary { list-style: none; } details > summary::-webkit-details-marker { display: none; }
+
+/* --------------------------------------------------------------------------
+   3D skyline (landing). Pure CSS cuboids, one scene, ~60 nodes.
+   Axes: X right, Y toward viewer, Z up. Faces are flat solid colours.
+   -------------------------------------------------------------------------- */
+@property --k { syntax: "<number>"; inherits: true; initial-value: 1; }
+.sky { perspective: 1500px; perspective-origin: 50% 25%; container-type: inline-size; }
+.sky-scene {
+  --tx: 0deg; --ty: 0deg;
+  position: relative; width: 100%; aspect-ratio: 1 / 0.86; transform-style: preserve-3d;
+  transform: rotateX(calc(56deg + var(--ty))) rotateZ(calc(-34deg + var(--tx))) scale(0.92);
+  transition: transform 500ms var(--ease);
+}
+.sky-slab { position: absolute; left: 2%; top: 20%; width: 96%; height: 56%; background: var(--panel-2); box-shadow: inset 0 0 0 1px var(--panel-line); transform: translateZ(-1px); }
+.sky-col { position: absolute; width: 7.4%; height: 8.6%; transform-style: preserve-3d; --h: 10; --k: 1; --u: 0.95cqw; animation: lw-grow 900ms var(--ease) backwards; animation-delay: calc(var(--n) * 45ms + 150ms); }
+.sky-col > i { position: absolute; display: block; }
+.sky-col .top { inset: 0; background: var(--ct); transform: translateZ(calc(var(--h) * var(--k) * var(--u))); }
+/* Four sides, hinged on the base edges so the box is complete from any tilt. */
+.sky-col .fr, .sky-col .bk { left: 0; width: 100%; height: calc(var(--h) * var(--k) * var(--u)); transform-origin: top; transform: rotateX(90deg); }
+.sky-col .fr { top: 100%; background: var(--cf); }
+.sky-col .bk { top: 0; background: var(--cf); }
+.sky-col .rt, .sky-col .lf { top: 0; height: 100%; width: calc(var(--h) * var(--k) * var(--u)); transform-origin: left; transform: rotateY(-90deg); }
+.sky-col .rt { left: 100%; background: var(--cs); }
+.sky-col .lf { left: 0; background: var(--cs); }
+.sky-col[data-zone="low"] { --ct: #7fe3b0; --cf: #3fae7b; --cs: #2d8a60; }
+.sky-col[data-zone="medium"] { --ct: #a9b8ff; --cf: #6f86ee; --cs: #5368cf; }
+.sky-col[data-zone="high"] { --ct: #ffd083; --cf: #e69a2a; --cs: #bf7a14; }
+.sky-col[data-zone="critical"] { --ct: #ff9b82; --cf: #e5593a; --cs: #b9411f; }
+@keyframes lw-grow { from { --k: 0; } to { --k: 1; } }
+
+/* --------------------------------------------------------------------------
+   Motion (restrained; all disabled for reduced-motion)
+   -------------------------------------------------------------------------- */
 @keyframes lw-fade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes lw-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-@keyframes lw-sheet { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes lw-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes lw-sheet { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+@keyframes lw-pop { from { opacity: 0; transform: translateY(6px) scale(0.98); } to { opacity: 1; transform: none; } }
 @keyframes lw-spin { to { transform: rotate(360deg); } }
 @keyframes lw-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-.anim-page { animation: lw-rise 220ms ease-out backwards; }
+@keyframes lw-tick { from { transform: scaleY(0.15); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes lw-toast { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes lw-drain { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+@keyframes lw-check { from { stroke-dashoffset: 24; } to { stroke-dashoffset: 0; } }
+@keyframes lw-blip { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+.anim-page { animation: lw-rise 260ms var(--ease) backwards; }
 .anim-fade { animation: lw-fade 160ms ease-out backwards; }
-.anim-sheet { animation: lw-sheet 200ms ease-out backwards; }
+.anim-sheet { animation: lw-sheet 240ms var(--ease) backwards; }
+.anim-pop { animation: lw-pop 200ms var(--ease) backwards; }
 .anim-spin { animation: lw-spin 800ms linear infinite; }
 .anim-pulse { animation: lw-pulse 1.4s ease-in-out infinite; }
+.anim-blip { animation: lw-blip 1.6s ease-in-out infinite; }
+.anim-check { stroke-dasharray: 24; animation: lw-check 320ms var(--ease) 80ms backwards; }
+.stagger > * { animation: lw-rise 320ms var(--ease) backwards; }
+.stagger > *:nth-child(1) { animation-delay: 0ms; } .stagger > *:nth-child(2) { animation-delay: 50ms; }
+.stagger > *:nth-child(3) { animation-delay: 100ms; } .stagger > *:nth-child(4) { animation-delay: 150ms; }
+.stagger > *:nth-child(5) { animation-delay: 200ms; } .stagger > *:nth-child(6) { animation-delay: 250ms; }
+.stagger > *:nth-child(n+7) { animation-delay: 300ms; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
+    animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Print: the planner prints the visible week as a clean list. */
+@media print {
+  html, body { background: #fff !important; }
 }

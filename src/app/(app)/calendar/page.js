@@ -1,18 +1,22 @@
 "use client";
 import { useMemo, useState } from "react";
 import { CalendarPlus, ChevronLeft, ChevronRight } from "lucide-react";
-import { Badge, Banner, Button, Card, PageHeader } from "@/components/ui";
+import { Banner, Button, Card, CardHead, IconButton, PageHeader, cx } from "@/components/ui";
 import { buildIcs, icsFilename } from "@/lib/ics";
 import { downloadText } from "@/lib/download";
-import { ReadyGate, TaskMeta } from "@/components/domain";
+import { ReadyGate, TaskMeta, useCourseColor } from "@/components/domain";
 import { useData } from "@/lib/store";
 import { addDays, toDateKey } from "@/lib/engine";
-import { formatClock, formatDayLong, formatMonth } from "@/lib/format";
+import { formatClock, formatDayLong, formatHours, formatMonth } from "@/lib/format";
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+/** Deadline colour: overdue, exam/test, other. Completed items fade. */
+const tone = (t, todayKey) => (t.status === "completed" ? "bg-line-strong" : t.dueDate < todayKey ? "bg-crit" : t.type === "exam" || t.type === "test" ? "bg-[var(--zone-high)]" : "bg-primary");
+
 function Calendar() {
   const { tasks, courses, sessions, now } = useData();
+  const colorOf = useCourseColor();
   const [month, setMonth] = useState(() => new Date(now.getFullYear(), now.getMonth(), 1));
   const [selected, setSelected] = useState(toDateKey(now));
   const [exported, setExported] = useState(null);
@@ -45,68 +49,88 @@ function Calendar() {
   };
   const shift = (n) => setMonth((m) => new Date(m.getFullYear(), m.getMonth() + n, 1));
 
-  const dayTasks = (byDay.get(selected) ?? []).sort((a, b) => (a.dueTime ?? "23:59").localeCompare(b.dueTime ?? "23:59"));
-  const daySessions = (sessionsByDay.get(selected) ?? []).sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  const dayTasks = [...(byDay.get(selected) ?? [])].sort((a, b) => (a.dueTime ?? "23:59").localeCompare(b.dueTime ?? "23:59"));
+  const daySessions = [...(sessionsByDay.get(selected) ?? [])].sort((a, b) => a.startsAt.localeCompare(b.startsAt));
   const upcoming = tasks.filter((t) => t.status !== "completed" && t.dueDate >= todayKey).sort((a, b) => `${a.dueDate}${a.dueTime ?? "23:59"}`.localeCompare(`${b.dueDate}${b.dueTime ?? "23:59"}`)).slice(0, 8);
 
   return (
     <>
-      <PageHeader title="Calendar" description="Deadlines by day. Select a day to see its tasks and study sessions." actions={<Button variant="secondary" icon={CalendarPlus} onClick={exportIcs}>Add to calendar (.ics)</Button>} />
+      <PageHeader eyebrow="Deadlines" title="Calendar" description="Deadlines by day. Select a day to see its tasks and study sessions." actions={<Button variant="secondary" icon={CalendarPlus} onClick={exportIcs}>Add to calendar (.ics)</Button>} />
       {exported ? <div className="mb-4"><Banner tone="info">{exported}</Banner></div> : null}
-      <div className="grid gap-5 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <Card className="p-2 sm:p-4">
-            <div className="mb-2 flex items-center justify-between">
-              <h2 className="t-section" aria-live="polite">{formatMonth(month)}</h2>
-              <div className="flex gap-1">
-                <Button variant="secondary" aria-label="Previous month" onClick={() => shift(-1)} className="!px-3"><ChevronLeft size={16} aria-hidden /></Button>
-                <Button variant="secondary" onClick={() => { setMonth(new Date(now.getFullYear(), now.getMonth(), 1)); setSelected(todayKey); }}>Today</Button>
-                <Button variant="secondary" aria-label="Next month" onClick={() => shift(1)} className="!px-3"><ChevronRight size={16} aria-hidden /></Button>
-              </div>
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_21rem]">
+        <Card className="overflow-hidden">
+          <div className="flex items-center justify-between gap-2 border-b border-line px-3 py-2.5 sm:px-4">
+            <h2 className="font-display text-[1.75rem] leading-none" aria-live="polite">{formatMonth(month)}</h2>
+            <div className="flex items-center gap-1">
+              <IconButton label="Previous month" icon={ChevronLeft} className="border border-line-strong" onClick={() => shift(-1)} />
+              <Button variant="secondary" onClick={() => { setMonth(new Date(now.getFullYear(), now.getMonth(), 1)); setSelected(todayKey); }}>Today</Button>
+              <IconButton label="Next month" icon={ChevronRight} className="border border-line-strong" onClick={() => shift(1)} />
             </div>
-            <div className="grid grid-cols-7 gap-px text-center" role="group" aria-label={formatMonth(month)}>
-              {WEEKDAYS.map((w) => <div key={w} className="t-label py-1.5 text-[10px] sm:text-xs">{w}</div>)}
-              {cells.map((d) => {
-                const key = toDateKey(d);
-                const inMonth = d.getMonth() === month.getMonth();
-                const ts = byDay.get(key) ?? [];
-                const open = ts.filter((t) => t.status !== "completed");
-                const hasOverdue = open.length > 0 && key < todayKey;
-                const hasMajor = open.some((t) => t.type === "exam" || t.type === "test");
-                const isSel = key === selected;
-                return (
-                  <button key={key} type="button" aria-pressed={isSel} aria-current={key === todayKey ? "date" : undefined}
-                    aria-label={`${formatDayLong(key)}, ${ts.length} deadline${ts.length === 1 ? "" : "s"}`} onClick={() => setSelected(key)}
-                    className={`flex min-h-12 min-w-0 flex-col items-center justify-start gap-1 rounded-md border p-1 text-sm transition-colors sm:min-h-20 sm:items-start sm:p-1.5 ${isSel ? "border-primary bg-primary-soft" : "border-transparent hover:bg-surface-2"} ${inMonth ? "" : "text-muted/60"}`}>
-                    <span className={`tnum flex size-6 items-center justify-center rounded-full text-xs sm:text-sm ${key === todayKey ? "bg-primary text-white" : ""}`}>{d.getDate()}</span>
-                    {ts.length > 0 ? (
-                      <span className="flex items-center gap-0.5">
-                        <span className={`size-2 rounded-full ${hasOverdue ? "bg-crit" : hasMajor ? "bg-warn" : "bg-primary"} ${open.length === 0 ? "opacity-40" : ""}`} aria-hidden />
-                        <span className="tnum text-[11px] text-muted">{ts.length}</span>
+          </div>
+          <div className="grid grid-cols-7 border-b border-line bg-surface-2" aria-hidden>
+            {WEEKDAYS.map((w) => <div key={w} className="t-label py-2 text-center text-[0.625rem] sm:text-[0.6875rem]">{w}</div>)}
+          </div>
+          <div className="grid grid-cols-7 gap-px bg-line" role="group" aria-label={formatMonth(month)}>
+            {cells.map((d) => {
+              const key = toDateKey(d);
+              const inMonth = d.getMonth() === month.getMonth();
+              const ts = byDay.get(key) ?? [];
+              const ordered = [...ts].sort((a, b) => (a.status === "completed") - (b.status === "completed") || (a.dueTime ?? "23:59").localeCompare(b.dueTime ?? "23:59"));
+              const isSel = key === selected;
+              const isToday = key === todayKey;
+              const studyMin = (sessionsByDay.get(key) ?? []).reduce((a, s) => a + s.minutes, 0);
+              return (
+                <button key={key} type="button" aria-pressed={isSel} aria-current={isToday ? "date" : undefined}
+                  aria-label={`${formatDayLong(key)}, ${ts.length} deadline${ts.length === 1 ? "" : "s"}${studyMin ? `, ${formatHours(studyMin / 60)} study planned` : ""}`} onClick={() => setSelected(key)}
+                  className={cx("relative flex min-h-[3.75rem] min-w-0 flex-col items-stretch gap-1 p-1 text-left transition-colors sm:min-h-[6.5rem] sm:p-1.5", inMonth ? "bg-surface hover:bg-primary-soft/60" : "bg-surface-2 text-muted hover:bg-primary-soft/40", isSel && "z-10 outline-2 -outline-offset-2 outline-ink")}>
+                  <span className={cx("tnum flex size-6 items-center justify-center self-start text-xs sm:text-sm", isToday ? "bg-ink font-semibold text-white" : "")}>{d.getDate()}</span>
+                  {/* phones: compact markers */}
+                  <span className="flex flex-wrap gap-0.5 sm:hidden" aria-hidden>
+                    {ordered.slice(0, 4).map((t) => <span key={t.id} className={cx("block h-1.5 w-3", tone(t, todayKey))} />)}
+                    {ordered.length > 4 ? <span className="font-mono text-[0.625rem] leading-none text-muted">+</span> : null}
+                  </span>
+                  {/* tablets and up: real deadline chips */}
+                  <span className="hidden min-w-0 flex-1 flex-col gap-0.5 sm:flex" aria-hidden>
+                    {ordered.slice(0, 2).map((t) => (
+                      <span key={t.id} className="flex min-w-0 items-center gap-1 rounded-xs bg-bg/80 py-px pr-1 text-[0.6875rem] leading-4">
+                        <span className={cx("block h-4 w-[3px] shrink-0", tone(t, todayKey))} />
+                        <span className={cx("truncate", t.status === "completed" && "text-muted line-through")}>{t.title}</span>
                       </span>
-                    ) : null}
-                  </button>
-                );
-              })}
-            </div>
-            <p className="t-small mt-3 flex flex-wrap gap-x-4 gap-y-1"><span><span className="mr-1 inline-block size-2 rounded-full bg-warn" />Exam or test</span><span><span className="mr-1 inline-block size-2 rounded-full bg-primary" />Other deadline</span><span><span className="mr-1 inline-block size-2 rounded-full bg-crit" />Overdue</span></p>
-          </Card>
-        </div>
+                    ))}
+                    {ordered.length > 2 ? <span className="pl-1 font-mono text-[0.625rem] text-muted">+{ordered.length - 2} more</span> : null}
+                  </span>
+                  {studyMin ? <span className="tnum mt-auto hidden items-center gap-1 font-mono text-[0.625rem] text-muted sm:flex" aria-hidden><span className="block h-2 w-0.5 bg-line-strong" />{formatHours(studyMin / 60)}</span> : null}
+                </button>
+              );
+            })}
+          </div>
+          <p className="t-small flex flex-wrap gap-x-4 gap-y-1 border-t border-line px-4 py-2.5">
+            <span className="inline-flex items-center gap-1.5"><span className="block h-2 w-3 bg-[var(--zone-high)]" aria-hidden />Exam or test</span>
+            <span className="inline-flex items-center gap-1.5"><span className="block h-2 w-3 bg-primary" aria-hidden />Other deadline</span>
+            <span className="inline-flex items-center gap-1.5"><span className="block h-2 w-3 bg-crit" aria-hidden />Overdue</span>
+            <span className="inline-flex items-center gap-1.5"><span className="block h-2 w-3 bg-line-strong" aria-hidden />Completed</span>
+          </p>
+        </Card>
 
         <div className="flex flex-col gap-5">
           <Card>
-            <h2 className="t-section border-b border-line p-4">{formatDayLong(selected)}</h2>
+            <div className="border-b border-line px-4 py-3"><p className="t-label">Selected day</p><h2 className="font-display text-[1.5rem] leading-tight">{formatDayLong(selected)}</h2></div>
             {dayTasks.length === 0 && daySessions.length === 0 ? <p className="t-small p-4">Nothing on this day.</p> : (
               <ul className="divide-y divide-line">
-                {dayTasks.map((t) => <li key={t.id} className="p-3 sm:px-4"><p className="break-words font-medium">{t.title}</p><TaskMeta task={t} now={now} course={courseOf(t.courseId)} /></li>)}
-                {daySessions.map((s) => <li key={s.id} className="p-3 sm:px-4"><p className="font-medium"><Badge tone="info">Study</Badge> <span className="tnum">{formatClock(s.startsAt)}-{formatClock(s.endsAt)}</span></p><p className="t-small mt-0.5 break-words">{taskOf(s.taskId)?.title}</p></li>)}
+                {dayTasks.map((t) => <li key={t.id} className="flex gap-3 p-3 sm:px-4"><span className={cx("mt-1 h-8 w-1 shrink-0", tone(t, todayKey))} aria-hidden /><div className="min-w-0"><p className={cx("font-medium break-words", t.status === "completed" && "text-muted line-through")}>{t.title}</p><TaskMeta task={t} now={now} course={courseOf(t.courseId)} /></div></li>)}
+                {daySessions.map((s) => (
+                  <li key={s.id} className="flex gap-3 p-3 sm:px-4">
+                    <span className="course-mark mt-1 h-8 w-1 shrink-0" style={{ "--c": colorOf(s.courseId) }} aria-hidden />
+                    <div className="min-w-0"><p className="t-label">Study session</p><p className="tnum font-mono text-[0.8125rem] font-medium">{formatClock(s.startsAt)}–{formatClock(s.endsAt)}</p><p className="t-small mt-0.5 break-words">{taskOf(s.taskId)?.title}</p></div>
+                  </li>
+                ))}
               </ul>
             )}
           </Card>
           <Card>
-            <h2 className="t-section border-b border-line p-4">Next deadlines</h2>
+            <CardHead title="Next deadlines" />
             {upcoming.length === 0 ? <p className="t-small p-4">No upcoming deadlines.</p> : (
-              <ul className="divide-y divide-line">{upcoming.map((t) => <li key={t.id} className="p-3 sm:px-4"><button type="button" className="w-full text-left" onClick={() => { setSelected(t.dueDate); setMonth(new Date(+t.dueDate.slice(0, 4), +t.dueDate.slice(5, 7) - 1, 1)); }}><p className="break-words font-medium">{t.title}</p><TaskMeta task={t} now={now} course={courseOf(t.courseId)} /></button></li>)}</ul>
+              <ul className="divide-y divide-line">{upcoming.map((t) => <li key={t.id}><button type="button" className="ledger-row w-full px-4 py-3 text-left" onClick={() => { setSelected(t.dueDate); setMonth(new Date(+t.dueDate.slice(0, 4), +t.dueDate.slice(5, 7) - 1, 1)); }}><p className="font-medium break-words">{t.title}</p><TaskMeta task={t} now={now} course={courseOf(t.courseId)} /></button></li>)}</ul>
             )}
           </Card>
         </div>

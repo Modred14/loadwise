@@ -2,7 +2,7 @@
  * Privacy rule: it never caches API responses or authenticated pages. It only
  * caches versioned static assets (cache-first) and shows an offline page when
  * a navigation fails. All academic data always comes live from the backend. */
-const CACHE = "loadwise-static-v1";
+const CACHE = "loadwise-static-v2";
 const OFFLINE_URL = "/offline.html";
 
 self.addEventListener("install", (event) => {

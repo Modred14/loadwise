@@ -1,74 +1,99 @@
 "use client";
-import { useState } from "react";
-import { Check, X } from "lucide-react";
-import { Badge, Banner, Button, Dialog, Field, Input, Select, SeverityBadge, Skeleton, Textarea } from "@/components/ui";
+import { useMemo, useState } from "react";
+import { Check } from "lucide-react";
+import { Badge, Banner, Button, Dialog, Field, Input, Select, Skeleton, Textarea, cx, useToast } from "@/components/ui";
+import { WarningCard } from "@/components/WarningCard";
+import { ScoreMeter } from "@/components/viz";
 import { TASK_TYPES, TYPE_CONFIG } from "@/lib/engine/config";
+import { courseColors } from "@/lib/courseColor";
 import { useData } from "@/lib/store";
-import { formatClock, formatDay, formatDue, relativeDue, typeLabel } from "@/lib/format";
+import { formatClock, formatDue, relativeDue, typeLabel } from "@/lib/format";
 
+export { ScoreMeter, WarningCard };
 export const IMPORTANCE_LABELS = { 1: "1 - Low", 2: "2 - Below normal", 3: "3 - Normal", 4: "4 - High", 5: "5 - Critical" };
-const BAR = { low: "bg-ok", medium: "bg-primary", high: "bg-warn", critical: "bg-crit" };
 
-export function ScoreMeter({ workload, size = "lg" }) {
-  const { score, category, categoryLabel } = workload;
-  return (
-    <div>
-      <div className="flex items-baseline gap-3">
-        <span className={`tnum font-semibold tracking-tight ${size === "lg" ? "text-5xl" : "text-3xl"}`} aria-label={`Workload score ${score} out of 100`}>{score}</span>
-        <span className="t-small">/ 100</span>
-        <Badge tone={category}>{categoryLabel}</Badge>
-      </div>
-      <div className="mt-3 h-2 overflow-hidden rounded-sm bg-surface-2 ring-1 ring-line" role="presentation">
-        <div className={`h-full transition-[width] duration-500 ease-out ${BAR[category]}`} style={{ width: `${Math.max(score, 2)}%` }} />
-      </div>
-    </div>
-  );
-}
-
-export function LoadingBlocks() {
-  return (
-    <div className="flex flex-col gap-4" aria-busy="true" role="status">
-      <span className="sr-only">Loading</span>
-      <Skeleton className="h-8 w-48" /><Skeleton className="h-32 w-full" /><Skeleton className="h-48 w-full" />
-    </div>
-  );
-}
-
-export function WarningItem({ w, onDismiss, onRead, busy }) {
+/* ---------------------------------------------------------------- Helpers */
+/** Colour for a course, stable across screens. */
+export function useCourseColor() {
   const { courses } = useData();
-  const course = courses.find((c) => c.id === w.courseId);
+  const map = useMemo(() => courseColors(courses), [courses]);
+  return (id) => map.get(id) ?? "var(--primary)";
+}
+
+export function CourseTag({ course, className }) {
+  const colorOf = useCourseColor();
+  if (!course) return null;
   return (
-    <div className={`rounded-lg border p-3 ${w.severity === "critical" ? "border-crit/40 bg-crit-soft/40" : w.severity === "warning" ? "border-warn/30 bg-warn-soft/40" : "border-line bg-surface"}`}>
-      <div className="flex flex-wrap items-center gap-2">
-        <SeverityBadge severity={w.severity} />
-        {course ? <Badge>{course.code ?? course.name}</Badge> : null}
-        {w.actionBy ? <span className="t-small tnum ml-auto">Act by {formatDay(w.actionBy.slice(0, 10))}, {formatClock(w.actionBy)}</span> : null}
-      </div>
-      <p className="mt-2 font-medium">{w.title}</p>
-      <p className="mt-1 text-sm text-muted">{w.why}</p>
-      <p className="mt-2 text-sm"><span className="font-medium">Next: </span>{w.nextStep}</p>
-      {(onDismiss || onRead) && w.id ? (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {onRead && !w.readAt ? <Button variant="secondary" icon={Check} loading={busy === `r${w.id}`} onClick={() => onRead(w)}>Mark read</Button> : null}
-          {onDismiss ? <Button variant="ghost" icon={X} loading={busy === `d${w.id}`} onClick={() => onDismiss(w)}>Dismiss</Button> : null}
+    <span className={cx("inline-flex min-w-0 items-center gap-1.5 font-mono text-xs font-medium text-ink", className)}>
+      <span className="course-mark size-2 shrink-0" style={{ "--c": colorOf(course.id) }} aria-hidden />
+      <span className="truncate">{course.code ?? course.name}</span>
+    </span>
+  );
+}
+
+/** Importance 1-5 as five small bars. */
+export function Pips({ n = 3, className }) {
+  return (
+    <span className={cx("inline-flex items-end gap-0.5", className)} role="img" aria-label={`Importance ${n} of 5`}>
+      {[1, 2, 3, 4, 5].map((i) => <span key={i} className={cx("w-[3px]", i <= n ? "bg-ink" : "bg-line-strong/60")} style={{ height: 4 + i * 2 }} />)}
+    </span>
+  );
+}
+
+/* ---------------------------------------------------------------- Loading */
+export function LoadingBlocks({ variant = "page" }) {
+  return (
+    <div className="flex flex-col gap-5" aria-busy="true" role="status">
+      <span className="sr-only">Loading</span>
+      <div><Skeleton className="h-3 w-24" /><Skeleton className="mt-3 h-10 w-64 max-w-full" /></div>
+      {variant === "dashboard" ? (
+        <div className="grid gap-5 lg:grid-cols-12">
+          <Skeleton className="h-72 lg:col-span-7" /><Skeleton className="h-72 lg:col-span-5" />
+          <Skeleton className="h-64 lg:col-span-7" /><Skeleton className="h-64 lg:col-span-5" />
         </div>
-      ) : null}
+      ) : variant === "list" ? (
+        <>
+          <Skeleton className="h-14 w-full" />
+          <div className="flex flex-col gap-px">{Array.from({ length: 6 }, (_, i) => <Skeleton key={i} className="h-16 w-full" />)}</div>
+        </>
+      ) : (
+        <div className="grid gap-5 lg:grid-cols-3"><Skeleton className="h-64 lg:col-span-2" /><Skeleton className="h-64" /></div>
+      )}
     </div>
   );
 }
 
+export function ReadyGate({ children, skeleton }) {
+  const d = useData();
+  if (d.status === "error") {
+    return <Banner title="Could not load your data" action={<Button variant="secondary" onClick={d.reload}>Retry</Button>}>{d.error}</Banner>;
+  }
+  if (d.status !== "ready" || !d.workload) return <LoadingBlocks variant={skeleton} />;
+  return children;
+}
+
+/* --------------------------------------------------------------- Warnings */
+export function WarningItem({ w, ...rest }) {
+  const { courses } = useData();
+  return <WarningCard w={w} course={courses.find((c) => c.id === w.courseId)} {...rest} />;
+}
+
+/* -------------------------------------------------------------- Task meta */
 export function TaskMeta({ task, now, course }) {
-  const overdue = now && relativeDue(task, now).startsWith("Overdue") && task.status !== "completed";
+  const rel = now ? relativeDue(task, now) : "";
+  const overdue = rel.startsWith("Overdue") && task.status !== "completed";
+  const soon = !overdue && task.status !== "completed" && (rel.startsWith("Due in") && rel.endsWith("h") || rel === "Due within the hour" || rel === "Due tomorrow");
   return (
-    <p className="t-small mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-      {course ? <span className="font-medium text-ink">{course.code ?? course.name}</span> : null}
+    <p className="t-small mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+      {course ? <CourseTag course={course} /> : null}
       <span>{typeLabel(task.type)}</span>
       <span className="tnum">{formatDue(task)}</span>
-      {task.status === "completed" ? <Badge tone="low">Completed</Badge> : overdue ? <Badge tone="critical">{relativeDue(task, now)}</Badge> : <span>{relativeDue(task, now)}</span>}
+      {task.status === "completed" ? <Badge tone="low">Completed</Badge> : overdue ? <Badge tone="critical">{rel}</Badge> : <span className={soon ? "font-medium text-warn" : ""}>{rel}</span>}
     </p>
   );
 }
 
+/* ------------------------------------------------------------------ Forms */
 function useSubmit(action, onDone) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
@@ -99,6 +124,7 @@ export function TaskDialog({ open, ...props }) {
 
 function TaskDialogInner({ onClose, task, defaultCourseId }) {
   const open = true;
+  const toast = useToast();
   const { courses, saveTask } = useData();
   const [form, setForm] = useState(() => (task ? { ...emptyTask(), ...task, dueTime: task.dueTime ?? "", estimatedHours: task.estimatedHours ?? "", description: task.description ?? "" } : emptyTask(defaultCourseId ?? courses[0]?.id ?? "")));
   const [local, setLocal] = useState({});
@@ -116,8 +142,7 @@ function TaskDialogInner({ onClose, task, defaultCourseId }) {
       dueDate: form.dueDate, dueTime: form.dueTime || null, estimatedHours: hours, importance: Number(form.importance),
       status: form.status, completedAt: form.status === "completed" ? (task?.completedAt ?? new Date().toISOString()) : null,
     });
-  }, onClose);
-
+  }, () => { toast(task ? "Task updated" : "Task added"); onClose(); });
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const err = (k) => local[k] ?? sub.fields[k];
@@ -171,6 +196,7 @@ export function CourseDialog({ open, ...props }) {
 
 function CourseDialogInner({ onClose, course }) {
   const open = true;
+  const toast = useToast();
   const { courses, saveCourse } = useData();
   const [form, setForm] = useState(() => (course ? { code: course.code ?? "", name: course.name ?? "", priority: course.priority ?? 3 } : { code: "", name: "", priority: 3 }));
   const [local, setLocal] = useState({});
@@ -182,7 +208,7 @@ function CourseDialogInner({ onClose, course }) {
     setLocal(errs);
     if (Object.keys(errs).length) throw Object.assign(new Error("Please fix the highlighted fields."), { fields: {} });
     await saveCourse(course?.id ?? null, { code: form.code.trim(), name: form.name.trim(), priority: Number(form.priority) });
-  }, onClose);
+  }, () => { toast(course ? "Course updated" : "Course added"); onClose(); });
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const err = (k) => local[k] ?? sub.fields[k];
   return (
@@ -202,12 +228,3 @@ function CourseDialogInner({ onClose, course }) {
 }
 
 export { formatClock };
-
-export function ReadyGate({ children }) {
-  const d = useData();
-  if (d.status === "error") {
-    return <Banner title="Could not load your data" action={<Button variant="secondary" onClick={d.reload}>Retry</Button>}>{d.error}</Banner>;
-  }
-  if (d.status !== "ready" || !d.workload) return <LoadingBlocks />;
-  return children;
-}
