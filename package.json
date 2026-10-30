@@ -7,14 +7,21 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --test \"src/lib/**/*.test.js\""
+    "test": "node --test \"src/lib/**/*.test.js\"",
+    "db:migrate": "node scripts/migrate.mjs",
+    "admin:grant": "node scripts/grant-role.mjs",
+    "vapid:generate": "node scripts/generate-vapid.mjs",
+    "test:server": "node --test \"src/server/*.test.js\""
   },
   "dependencies": {
     "geist": "^1.8.2",
     "lucide-react": "^1.61.0",
     "next": "16.4.3",
+    "pg": "^8.23.1",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "unpdf": "^1.9.1",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",

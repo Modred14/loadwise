@@ -1,5 +1,7 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { api } from "@/lib/api/client";
+import { useAuth } from "@/lib/auth";
 import { Check } from "lucide-react";
 import { Badge, Banner, Button, Dialog, Field, Input, Select, Skeleton, Textarea, cx, useToast } from "@/components/ui";
 import { WarningCard } from "@/components/WarningCard";
@@ -87,6 +89,7 @@ export function TaskMeta({ task, now, course }) {
     <p className="t-small mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1">
       {course ? <CourseTag course={course} /> : null}
       <span>{typeLabel(task.type)}</span>
+      {task.sharedDeadlineId ? <Badge tone="info">Course rep</Badge> : null}
       <span className="tnum">{formatDue(task)}</span>
       {task.status === "completed" ? <Badge tone="low">Completed</Badge> : overdue ? <Badge tone="critical">{rel}</Badge> : <span className={soon ? "font-medium text-warn" : ""}>{rel}</span>}
     </p>
@@ -126,6 +129,7 @@ function TaskDialogInner({ onClose, task, defaultCourseId }) {
   const open = true;
   const toast = useToast();
   const { courses, saveTask } = useData();
+  const locked = !!task?.sharedDeadlineId; // date, title and type are managed by the course rep
   const [form, setForm] = useState(() => (task ? { ...emptyTask(), ...task, dueTime: task.dueTime ?? "", estimatedHours: task.estimatedHours ?? "", description: task.description ?? "" } : emptyTask(defaultCourseId ?? courses[0]?.id ?? "")));
   const [local, setLocal] = useState({});
   const sub = useSubmit(async () => {
@@ -158,18 +162,19 @@ function TaskDialogInner({ onClose, task, defaultCourseId }) {
       {courses.length === 0 ? <Banner tone="warning" title="Add a course first">Tasks belong to a course.</Banner> : (
         <form onSubmit={(e) => { e.preventDefault(); sub.run(); }} noValidate className="flex flex-col gap-4">
           {sub.error ? <Banner title="Could not save the task">{sub.error}</Banner> : null}
-          <Field label="Title" htmlFor="t-title" error={err("title")}><Input id="t-title" value={form.title} onChange={set("title")} aria-invalid={!!err("title")} maxLength={160} /></Field>
+          {locked ? <Banner tone="info" title="Managed by your course rep">The title, type and date are set by your course rep and update automatically. You can still change your preparation time and importance.</Banner> : null}
+          <Field label="Title" htmlFor="t-title" error={err("title")}><Input id="t-title" disabled={locked} value={form.title} onChange={set("title")} aria-invalid={!!err("title")} maxLength={160} /></Field>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Course" htmlFor="t-course" error={err("courseId")}>
-              <Select id="t-course" value={form.courseId} onChange={set("courseId")} aria-invalid={!!err("courseId")}>
+              <Select id="t-course" disabled={locked} value={form.courseId} onChange={set("courseId")} aria-invalid={!!err("courseId")}>
                 {courses.map((c) => <option key={c.id} value={c.id}>{c.code ? `${c.code} - ${c.name}` : c.name}</option>)}
               </Select>
             </Field>
             <Field label="Type" htmlFor="t-type">
-              <Select id="t-type" value={form.type} onChange={set("type")}>{TASK_TYPES.map((t) => <option key={t} value={t}>{TYPE_CONFIG[t].label}</option>)}</Select>
+              <Select id="t-type" disabled={locked} value={form.type} onChange={set("type")}>{TASK_TYPES.map((t) => <option key={t} value={t}>{TYPE_CONFIG[t].label}</option>)}</Select>
             </Field>
-            <Field label="Due date" htmlFor="t-date" error={err("dueDate")}><Input id="t-date" type="date" value={form.dueDate} onChange={set("dueDate")} aria-invalid={!!err("dueDate")} /></Field>
-            <Field label="Due time (optional)" htmlFor="t-time" error={err("dueTime")}><Input id="t-time" type="time" value={form.dueTime} onChange={set("dueTime")} /></Field>
+            <Field label="Due date" htmlFor="t-date" error={err("dueDate")}><Input id="t-date" disabled={locked} type="date" value={form.dueDate} onChange={set("dueDate")} aria-invalid={!!err("dueDate")} /></Field>
+            <Field label="Due time (optional)" htmlFor="t-time" error={err("dueTime")}><Input id="t-time" disabled={locked} type="time" value={form.dueTime} onChange={set("dueTime")} /></Field>
             <Field label="Preparation needed (hours)" htmlFor="t-hours" hint={hint} error={err("estimatedHours")}>
               <Input id="t-hours" type="number" inputMode="decimal" step="0.5" min="0.5" value={form.estimatedHours} onChange={set("estimatedHours")} aria-invalid={!!err("estimatedHours")} />
             </Field>
@@ -198,8 +203,20 @@ function CourseDialogInner({ onClose, course }) {
   const open = true;
   const toast = useToast();
   const { courses, saveCourse } = useData();
-  const [form, setForm] = useState(() => (course ? { code: course.code ?? "", name: course.name ?? "", priority: course.priority ?? 3 } : { code: "", name: "", priority: 3 }));
+  const { user } = useAuth();
+  const [catalog, setCatalog] = useState([]);
+  useEffect(() => {
+    if (!user?.departmentId) return;
+    let live = true;
+    api.catalog.list().then((d) => live && setCatalog(d)).catch(() => {}); // optional enhancement; the form works without it
+    return () => { live = false; };
+  }, [user?.departmentId]);
+  const [form, setForm] = useState(() => (course ? { code: course.code ?? "", name: course.name ?? "", priority: course.priority ?? 3, catalogId: course.catalogId ?? "" } : { code: "", name: "", priority: 3, catalogId: "" }));
   const [local, setLocal] = useState({});
+  const pickCatalog = (e) => {
+    const c = catalog.find((x) => x.id === e.target.value);
+    setForm((f) => ({ ...f, catalogId: e.target.value, code: f.code || c?.code || "", name: f.name || c?.name || "" }));
+  };
   const sub = useSubmit(async () => {
     const errs = {};
     if (!form.name.trim()) errs.name = "Enter the course name";
@@ -207,7 +224,7 @@ function CourseDialogInner({ onClose, course }) {
     else if (courses.some((c) => c.id !== course?.id && c.code?.toLowerCase() === form.code.trim().toLowerCase())) errs.code = "You already have a course with this code";
     setLocal(errs);
     if (Object.keys(errs).length) throw Object.assign(new Error("Please fix the highlighted fields."), { fields: {} });
-    await saveCourse(course?.id ?? null, { code: form.code.trim(), name: form.name.trim(), priority: Number(form.priority) });
+    await saveCourse(course?.id ?? null, { code: form.code.trim(), name: form.name.trim(), priority: Number(form.priority), ...(course || form.catalogId ? { catalogId: form.catalogId || null } : {}) });
   }, () => { toast(course ? "Course updated" : "Course added"); onClose(); });
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const err = (k) => local[k] ?? sub.fields[k];
@@ -216,6 +233,11 @@ function CourseDialogInner({ onClose, course }) {
       footer={<><Button variant="secondary" onClick={onClose}>Cancel</Button><Button loading={sub.busy} onClick={sub.run}>{course ? "Save changes" : "Add course"}</Button></>}>
       <form onSubmit={(e) => { e.preventDefault(); sub.run(); }} noValidate className="flex flex-col gap-4">
         {sub.error ? <Banner title="Could not save the course">{sub.error}</Banner> : null}
+        {catalog.length ? (
+          <Field label="Department course (optional)" htmlFor="c-cat" hint="Link this to the official course to receive dates from your course rep as tasks.">
+            <Select id="c-cat" value={form.catalogId} onChange={pickCatalog}><option value="">Not linked</option>{catalog.map((c) => <option key={c.id} value={c.id}>{c.code}: {c.name}</option>)}</Select>
+          </Field>
+        ) : null}
         <Field label="Course code" htmlFor="c-code" error={err("code")}><Input id="c-code" value={form.code} onChange={set("code")} maxLength={20} aria-invalid={!!err("code")} /></Field>
         <Field label="Course name" htmlFor="c-name" error={err("name")}><Input id="c-name" value={form.name} onChange={set("name")} maxLength={120} aria-invalid={!!err("name")} /></Field>
         <Field label="Course priority" htmlFor="c-pri" hint="Higher priority courses count slightly more in workload and planning.">

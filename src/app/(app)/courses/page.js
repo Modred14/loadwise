@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
 import { BookOpen, Pencil, Plus, Trash2 } from "lucide-react";
-import { Badge, Button, Card, ConfirmDialog, EmptyState, IconButton, PageHeader, Progress, useToast } from "@/components/ui";
+import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
+import { Badge, Banner, Button, Card, ConfirmDialog, Dialog, EmptyState, IconButton, PageHeader, Progress, useToast } from "@/components/ui";
 import { CourseDialog, ReadyGate, useCourseColor } from "@/components/domain";
 import { useData } from "@/lib/store";
 import { formatDay, formatHours } from "@/lib/format";
@@ -13,10 +14,44 @@ function Stat({ label, value }) {
   return <div><dt className="t-label">{label}</dt><dd className="tnum mt-1 text-sm font-medium">{value}</dd></div>;
 }
 
+/** Reorder courses by importance. The server turns the order into priorities (top = 5 ... last = 1). */
+function RankDialog({ courses, onClose }) {
+  const { rankCourses } = useData();
+  const toast = useToast();
+  const [order, setOrder] = useState(() => courses.map((c) => c.id));
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(null);
+  const move = (i, d) => setOrder((o) => { const n = [...o]; const j = i + d; if (j < 0 || j >= n.length) return o; [n[i], n[j]] = [n[j], n[i]]; return n; });
+  const save = async () => {
+    setBusy(true); setErr(null);
+    try { await rankCourses(order); toast("Course ranking saved"); onClose(); } catch (e) { setErr(e.message); } finally { setBusy(false); }
+  };
+  return (
+    <Dialog open onClose={onClose} title="Rank your courses" footer={<><Button variant="secondary" onClick={onClose}>Cancel</Button><Button loading={busy} onClick={save}>Save ranking</Button></>}>
+      <p className="t-small mb-3">Put the course that matters most at the top. Higher-ranked courses count more in your workload score and get planned first when time is short.</p>
+      {err ? <div className="mb-3"><Banner title="Could not save the ranking">{err}</Banner></div> : null}
+      <ol className="border border-line-strong">
+        {order.map((id, i) => {
+          const c = courses.find((x) => x.id === id);
+          return (
+            <li key={id} className="flex items-center gap-2 border-b border-line py-1 pr-1 pl-3 last:border-0">
+              <span className="tnum w-6 shrink-0 text-sm text-muted">{i + 1}</span>
+              <span className="min-w-0 flex-1 truncate text-sm"><span className="font-medium">{c.code}</span> <span className="text-muted">{c.name}</span></span>
+              <IconButton label={`Move ${c.code} up`} icon={ArrowUp} disabled={i === 0} onClick={() => move(i, -1)} />
+              <IconButton label={`Move ${c.code} down`} icon={ArrowDown} disabled={i === order.length - 1} onClick={() => move(i, 1)} />
+            </li>
+          );
+        })}
+      </ol>
+    </Dialog>
+  );
+}
+
 function Courses() {
   const { courses, tasks, workload, deleteCourse } = useData();
   const toast = useToast();
   const colorOf = useCourseColor();
+  const [ranking, setRanking] = useState(false);
   const [edit, setEdit] = useState(null);
   const [open, setOpen] = useState(false);
   const [del, setDel] = useState(null);
@@ -34,7 +69,7 @@ function Courses() {
 
   return (
     <>
-      <PageHeader eyebrow="Semester" title="Courses" description="Set a priority for each course; higher priority courses count slightly more in your workload and plan." actions={<Button icon={Plus} onClick={() => { setEdit(null); setOpen(true); }}>Add course</Button>} />
+      <PageHeader eyebrow="Semester" title="Courses" description="Set a priority for each course; higher priority courses count slightly more in your workload and plan." actions={<>{courses.length > 1 ? <Button variant="secondary" icon={ArrowUpDown} onClick={() => setRanking(true)}>Rank courses</Button> : null}<Button icon={Plus} onClick={() => { setEdit(null); setOpen(true); }}>Add course</Button></>} />
       {courses.length === 0 ? (
         <Card><EmptyState icon={BookOpen} title="No courses yet" action={<Button onClick={() => { setEdit(null); setOpen(true); }}>Add your first course</Button>}>Add the courses you are taking this semester, then attach tests, assignments and exams to them.</EmptyState></Card>
       ) : (
@@ -84,6 +119,7 @@ function Courses() {
           </Card>
         </>
       )}
+      {ranking ? <RankDialog courses={courses} onClose={() => setRanking(false)} /> : null}
       <CourseDialog open={open} onClose={() => setOpen(false)} course={edit} />
       <ConfirmDialog open={!!del} onClose={() => setDel(null)} onConfirm={confirm} busy={busy} error={err} title={`Delete ${del?.code ?? "course"}?`}>
         {del && taskCount(del.id) > 0

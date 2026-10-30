@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import { Banner, Button, Field, Input } from "@/components/ui";
+import { Banner, Button, Field, Input, Select } from "@/components/ui";
+import { api } from "@/lib/api/client";
 import { Logo } from "@/components/brand";
 import { LoadRail } from "@/components/viz";
 
@@ -18,13 +19,20 @@ export default function AuthForm({ mode }) {
   const isRegister = mode === "register";
   const { status, login, register } = useAuth();
   const router = useRouter();
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [form, setForm] = useState({ name: "", email: "", password: "", departmentId: "" });
+  const [depts, setDepts] = useState([]);
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [fields, setFields] = useState({});
 
   useEffect(() => { if (status === "authenticated") router.replace("/dashboard"); }, [status, router]);
+  useEffect(() => {
+    if (!isRegister) return;
+    let live = true;
+    api.profile.departments().then((d) => live && setDepts(d)).catch(() => {}); // optional: registration works without it
+    return () => { live = false; };
+  }, [isRegister]);
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const submit = async (e) => {
@@ -39,7 +47,7 @@ export default function AuthForm({ mode }) {
     setBusy(true);
     setError(null);
     try {
-      await (isRegister ? register({ name: form.name.trim(), email: form.email.trim(), password: form.password }) : login({ email: form.email.trim(), password: form.password }));
+      await (isRegister ? register({ name: form.name.trim(), email: form.email.trim(), password: form.password, ...(form.departmentId ? { departmentId: form.departmentId } : {}) }) : login({ email: form.email.trim(), password: form.password }));
       router.replace("/dashboard");
     } catch (err) {
       setError(err.message);
@@ -91,6 +99,12 @@ export default function AuthForm({ mode }) {
                 </button>
               </div>
             </Field>
+            {isRegister && depts.length ? (
+              <Field label="Department (optional)" htmlFor="departmentId" hint="Lets you receive official dates from your course reps. You can change it later in Settings.">
+                <Select id="departmentId" value={form.departmentId} onChange={set("departmentId")}><option value="">Not now</option>{depts.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</Select>
+              </Field>
+            ) : null}
+            {!isRegister ? <p className="-mt-1 text-right"><Link href="/forgot-password" className="t-small font-medium text-primary underline underline-offset-4">Forgot password?</Link></p> : null}
             <Button type="submit" loading={busy} disabled={status === "unconfigured"} className="mt-1 min-h-12">{isRegister ? "Create account" : "Log in"}</Button>
           </form>
           <p className="t-small mt-6 text-[0.9375rem]">

@@ -1,0 +1,20 @@
+# Calls the app's scheduled endpoints. Vercel Hobby cron only runs daily, so reminders (every ~10 min) use GitHub's scheduler.
+# Add repository secrets: APP_URL (e.g. https://your-app.example.com) and CRON_SECRET (same value as the app's CRON_SECRET).
+name: scheduled-jobs
+on:
+  schedule:
+    - cron: "*/10 * * * *"   # reminders: enqueue + send
+    - cron: "15 3 * * *"     # daily: workload snapshots + housekeeping
+  workflow_dispatch:
+permissions: {}
+jobs:
+  reminders:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '*/10 * * * *'
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl --fail-with-body -sS -X POST -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" "${{ secrets.APP_URL }}/api/cron/reminders"
+  snapshots:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '15 3 * * *'
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl --fail-with-body -sS -X POST -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" "${{ secrets.APP_URL }}/api/cron/snapshots"

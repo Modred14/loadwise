@@ -1,5 +1,6 @@
 // The only place the frontend talks to the backend. Endpoints follow docs/API_CONTRACT.md.
-const BASE = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "").replace(/\/$/, "");
+// The API ships inside this app at /api. Set NEXT_PUBLIC_API_BASE_URL only to point at a different backend.
+const BASE = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api").replace(/\/$/, "");
 export const apiConfigured = BASE.length > 0;
 
 export class ApiError extends Error {
@@ -17,10 +18,12 @@ const FRIENDLY = {
   403: "You do not have permission to do that.",
   404: "That item no longer exists.",
   409: "This changed elsewhere or already exists. Refresh and try again.",
+  413: "That file is too large.",
   429: "Too many requests. Please wait a moment and try again.",
+  503: "The service is temporarily unavailable. Please try again shortly.",
 };
 
-async function request(method, path, body) {
+async function request(method, path, body, { form = false, timeout = 15000 } = {}) {
   if (!apiConfigured) {
     throw new ApiError(0, "NOT_CONFIGURED", "The backend is not connected yet. Set NEXT_PUBLIC_API_BASE_URL.");
   }
@@ -29,9 +32,9 @@ async function request(method, path, body) {
     res = await fetch(`${BASE}${path}`, {
       method,
       credentials: "include",
-      headers: body !== undefined ? { "Content-Type": "application/json" } : undefined,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
-      signal: AbortSignal.timeout(15000),
+      headers: body !== undefined && !form ? { "Content-Type": "application/json" } : undefined,
+      body: body === undefined ? undefined : form ? body : JSON.stringify(body),
+      signal: AbortSignal.timeout(timeout),
     });
   } catch {
     throw new ApiError(0, "NETWORK", FRIENDLY[0]);
@@ -60,6 +63,10 @@ const qs = (o = {}) => {
 export const api = {
   auth: {
     me: () => request("GET", "/auth/me"),
+    forgot: (email) => request("POST", "/auth/forgot", { email }),
+    reset: (b) => request("POST", "/auth/reset", b),
+    changePassword: (b) => request("POST", "/auth/change-password", b),
+    logoutAll: () => request("POST", "/auth/logout-all", {}),
     login: (b) => request("POST", "/auth/login", b),
     register: (b) => request("POST", "/auth/register", b),
     logout: () => request("POST", "/auth/logout", {}),
@@ -73,6 +80,7 @@ export const api = {
     create: (b) => request("POST", "/courses", b),
     update: (id, b) => request("PATCH", `/courses/${encodeURIComponent(id)}`, b),
     remove: (id, cascade) => request("DELETE", `/courses/${encodeURIComponent(id)}${cascade ? "?cascade=true" : ""}`),
+    rank: async (order) => items(await request("PUT", "/courses/ranking", { order })),
   },
   tasks: {
     list: async (f) => items(await request("GET", `/tasks${qs(f)}`)),
@@ -90,5 +98,56 @@ export const api = {
     sync: (b) => request("POST", "/warnings/sync", b),
     dismiss: (id) => request("POST", `/warnings/${encodeURIComponent(id)}/dismiss`, {}),
     read: (id) => request("POST", `/warnings/${encodeURIComponent(id)}/read`, {}),
+  },
+  profile: {
+    update: (b) => request("PATCH", "/profile", b),
+    departments: async () => items(await request("GET", "/departments")),
+  },
+  notifications: {
+    list: async () => items(await request("GET", "/notifications")),
+    read: (id) => request("POST", `/notifications/${encodeURIComponent(id)}/read`, {}),
+    readAll: () => request("POST", "/notifications/read-all", {}),
+  },
+  catalog: {
+    list: async () => items(await request("GET", "/catalog")),
+    create: (b) => request("POST", "/catalog", b),
+    update: (id, b) => request("PATCH", `/catalog/${encodeURIComponent(id)}`, b),
+    remove: (id) => request("DELETE", `/catalog/${encodeURIComponent(id)}`),
+    reps: async (id) => items(await request("GET", `/catalog/${encodeURIComponent(id)}/reps`)),
+    addRep: (id, email) => request("POST", `/catalog/${encodeURIComponent(id)}/reps`, { email }),
+    removeRep: (id, userId) => request("DELETE", `/catalog/${encodeURIComponent(id)}/reps/${encodeURIComponent(userId)}`),
+  },
+  shared: {
+    list: async (catalogId) => items(await request("GET", `/shared-deadlines${qs({ catalogId })}`)),
+    create: (b) => request("POST", "/shared-deadlines", b),
+    update: (id, b) => request("PATCH", `/shared-deadlines/${encodeURIComponent(id)}`, b),
+    remove: (id) => request("DELETE", `/shared-deadlines/${encodeURIComponent(id)}`),
+  },
+  materials: {
+    list: (f) => request("GET", `/materials${qs(f)}`),
+    usage: () => request("GET", "/materials/usage"),
+    upload: (formData) => request("POST", "/materials", formData, { form: true, timeout: 60000 }),
+    update: (id, b) => request("PATCH", `/materials/${encodeURIComponent(id)}`, b),
+    setTasks: (id, taskIds) => request("PUT", `/materials/${encodeURIComponent(id)}/tasks`, { taskIds }),
+    remove: (id) => request("DELETE", `/materials/${encodeURIComponent(id)}`),
+    fileUrl: (id, inline) => `${BASE}/materials/${encodeURIComponent(id)}/file${inline ? "?inline=1" : ""}`,
+  },
+  workload: {
+    snapshot: () => request("POST", "/workload/snapshot", {}),
+    trend: (days = 60) => request("GET", `/workload/trend?days=${days}`),
+  },
+  department: {
+    insights: () => request("GET", "/department/insights"),
+  },
+  reminders: {
+    status: () => request("GET", "/reminders/status"),
+    test: (channel) => request("POST", "/reminders/test", { channel }),
+    publicKey: () => request("GET", "/push/public-key"),
+    subscribe: (b) => request("POST", "/push/subscribe", b),
+    unsubscribe: (endpoint) => request("POST", "/push/unsubscribe", { endpoint }),
+  },
+  account: {
+    exportUrl: `${BASE}/account/export`,
+    remove: (password) => request("DELETE", "/account", { password }),
   },
 };

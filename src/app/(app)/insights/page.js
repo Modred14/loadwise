@@ -1,5 +1,8 @@
 "use client";
+import { useEffect, useState } from "react";
 import { Badge, Card, CardHead, PageHeader, Progress, SeverityBadge, cx } from "@/components/ui";
+import TrendChart from "@/components/trend";
+import { api } from "@/lib/api/client";
 import { CourseTag, ReadyGate } from "@/components/domain";
 import { ScoreMeter } from "@/components/viz";
 import { useData } from "@/lib/store";
@@ -18,6 +21,37 @@ const MEANING = {
   high: "Heavy. Plan carefully and protect study time.",
   critical: "Overloaded. Act on the warnings first.",
 };
+
+/** Workload history recorded by the server once per day. Shows nothing until there is real history. */
+function TrendCard() {
+  const [trend, setTrend] = useState({ status: "loading", items: [], summary: null });
+  useEffect(() => {
+    let live = true;
+    api.workload.trend(60).then((d) => live && setTrend({ status: "ready", items: d.items, summary: d.summary })).catch(() => live && setTrend({ status: "error", items: [], summary: null }));
+    return () => { live = false; };
+  }, []);
+  if (trend.status === "loading") return null;
+  const { items, summary } = trend;
+  return (
+    <section aria-label="Workload trend" className="lg:col-span-12">
+      <Card>
+        <CardHead title="Your workload over time" />
+        {trend.status === "error" ? <p className="t-small p-4">The workload history could not be loaded right now.</p> : items.length < 2 ? (
+          <p className="t-small p-4">History builds up as you use LoadWise: one score is recorded per day. Check back after a couple of days to see how your load is changing.</p>
+        ) : (
+          <div className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_14rem]">
+            <TrendChart points={items} />
+            <dl className="grid grid-cols-3 gap-3 lg:grid-cols-1">
+              <div><dt className="t-label">Latest</dt><dd className="t-num tnum text-3xl">{summary.latest}</dd></div>
+              <div><dt className="t-label">Peak</dt><dd className="t-num tnum text-3xl">{summary.peak}</dd></div>
+              <div><dt className="t-label">vs 7 days ago</dt><dd className="t-num tnum text-3xl">{summary.changeVs7DaysAgo == null ? "n/a" : `${summary.changeVs7DaysAgo > 0 ? "+" : ""}${summary.changeVs7DaysAgo}`}</dd></div>
+            </dl>
+          </div>
+        )}
+      </Card>
+    </section>
+  );
+}
 
 function Insights() {
   const { workload: w } = useData();
@@ -106,6 +140,7 @@ function Insights() {
             ))}</ul>
           )}
         </Card>
+        <TrendCard />
       </div>
     </>
   );

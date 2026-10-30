@@ -2,7 +2,7 @@
 
 Academic load tracker, early-warning system and study planner (Next.js 16, React 19, Tailwind 4, JavaScript).
 
-LoadWise is a frontend that talks to a separate backend API. See `docs/API_CONTRACT.md` for the endpoints, shapes and access rules the frontend expects. Without a backend URL the app shows "Backend not connected" and displays no data; it never fabricates any.
+LoadWise is a Next.js app with its API built in (PostgreSQL / Neon). See `docs/BACKEND.md`. See `docs/API_CONTRACT.md` for the endpoints, shapes and access rules the frontend expects. Without a backend URL the app shows "Backend not connected" and displays no data; it never fabricates any.
 
 ## Setup
 ```bash
@@ -33,3 +33,14 @@ Study material uploads and search, linking materials to sessions, course-rep upd
 
 ## Security note
 The route guard in the frontend is for user experience only. The backend must authenticate every request and scope all data to the signed-in user.
+
+
+## Backend quick start
+```bash
+cp .env.example .env.local      # set DATABASE_URL (Neon pooled string)
+npm run db:migrate
+npm run dev
+npm test                        # engine + UI unit tests
+TEST_DATABASE_URL=postgres://user:pw@localhost/postgres npm run test:server   # API integration tests (creates throwaway databases)
+```
+Full details, security model and limitations: `docs/BACKEND.md`.

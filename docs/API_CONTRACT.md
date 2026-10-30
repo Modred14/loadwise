@@ -1,3 +1,5 @@
+> **Status:** this contract is now implemented by the built-in API (`src/server`, PostgreSQL). See `docs/BACKEND.md` for setup, endpoints added since (materials, shared dates, department insights, reminders, trends, account) and the security model.
+
 # LoadWise API contract (frontend to backend)
 
 For the backend engineer (Replit). The frontend needs these resources; shapes below are what the engine and UI consume. Anything marked *proposed* can be changed, but tell the frontend so `src/lib/api` stays in sync.

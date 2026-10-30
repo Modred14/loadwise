@@ -35,7 +35,14 @@ export function AuthProvider({ children }) {
     setState({ status: "anonymous", user: null, error: null });
   }, []);
 
-  const value = useMemo(() => ({ ...state, login, register, logout }), [state, login, register, logout]);
+  /** Re-reads the signed-in user (after a department/role change). */
+  const refresh = useCallback(async () => {
+    const d = await api.auth.me();
+    setState((s) => ({ ...s, status: "authenticated", user: d?.user ?? d }));
+  }, []);
+  const setUser = useCallback((user) => setState((s) => ({ ...s, user })), []);
+
+  const value = useMemo(() => ({ ...state, login, register, logout, refresh, setUser }), [state, login, register, logout, refresh, setUser]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

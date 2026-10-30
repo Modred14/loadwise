@@ -33,3 +33,30 @@ self.addEventListener("fetch", (event) => {
     );
   }
 });
+
+/* ---- Web Push ---------------------------------------------------------
+ * The server sends { title, body, url, tag }. The payload is only ever used as
+ * notification text (never as HTML) and `url` is restricted to same-origin paths. */
+self.addEventListener("push", (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch { data = { title: "LoadWise", body: event.data ? event.data.text() : "" }; }
+  const title = String(data.title || "LoadWise").slice(0, 120);
+  event.waitUntil(self.registration.showNotification(title, {
+    body: String(data.body || "").slice(0, 300),
+    icon: "/icons/icon-192.png",
+    badge: "/icons/icon-192.png",
+    tag: data.tag ? String(data.tag).slice(0, 100) : undefined,
+    data: { url: typeof data.url === "string" && data.url.startsWith("/") && !data.url.startsWith("//") ? data.url : "/dashboard" },
+  }));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = new URL(event.notification.data?.url || "/dashboard", self.location.origin).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((wins) => {
+      for (const w of wins) if (w.url.startsWith(self.location.origin) && "focus" in w) { w.navigate(target); return w.focus(); }
+      return self.clients.openWindow(target);
+    }),
+  );
+});

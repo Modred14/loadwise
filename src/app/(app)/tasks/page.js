@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import { CheckCircle2, Circle, CheckSquare, Pencil, Plus, Search, Trash2 } from "lucide-react";
-import { Banner, Button, Card, ConfirmDialog, EmptyState, IconButton, Input, PageHeader, Segmented, Select, cx, useToast } from "@/components/ui";
+import { Badge, Banner, Button, Card, ConfirmDialog, EmptyState, IconButton, Input, PageHeader, Segmented, Select, cx, useToast } from "@/components/ui";
 import { CourseTag, Pips, ReadyGate, TaskDialog, TaskMeta, useCourseColor } from "@/components/domain";
 import { TASK_TYPES, TYPE_CONFIG } from "@/lib/engine/config";
 import { useData } from "@/lib/store";
@@ -156,7 +156,7 @@ function Tasks() {
                   return (
                     <tr key={t.id} className={cx("ledger-row border-t border-line", t.status === "completed" && "text-muted")}>
                       <td className="p-1 pl-2 text-center" style={stripe(t)}><DoneToggle t={t} busy={busy} onToggle={toggle} /></td>
-                      <td className="p-2"><p className={cx("truncate font-medium", t.status === "completed" && "line-through")} title={t.title}>{t.title}</p><p className="mt-0.5 flex items-center gap-2 truncate"><CourseTag course={c} /><span className="t-small truncate">{c?.name ?? "No course"}</span></p></td>
+                      <td className="p-2"><p className={cx("truncate font-medium", t.status === "completed" && "line-through")} title={t.title}>{t.title}</p><p className="mt-0.5 flex items-center gap-2 truncate"><CourseTag course={c} /><span className="t-small truncate">{c?.name ?? "No course"}</span>{t.sharedDeadlineId ? <Badge tone="info">Course rep</Badge> : null}</p></td>
                       <td className="hidden p-2 xl:table-cell">{typeLabel(t.type)}</td>
                       <td className="p-2"><p className="tnum">{formatDue(t)}</p><p className={cx("text-xs", overdue ? "font-medium text-crit" : "text-muted")}>{t.status === "completed" ? "Completed" : relativeDue(t, now)}</p></td>
                       <td className="p-2"><p className="tnum font-mono text-[0.8125rem]">{hours(t)}h</p><Pips n={t.importance ?? 3} className="mt-1" /></td>

@@ -1,10 +1,8 @@
 "use client";
 import { useState } from "react";
-import { LogOut } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { Banner, Button, Card, CardHead, Field, Input, PageHeader, cx, useToast } from "@/components/ui";
 import { ReadyGate } from "@/components/domain";
-import { useAuth } from "@/lib/auth";
+import { AccountCard, DepartmentCard, RemindersCard } from "@/components/settings-sections";
 import { useData } from "@/lib/store";
 
 const DAYS = [["Mon", 1], ["Tue", 2], ["Wed", 3], ["Thu", 4], ["Fri", 5], ["Sat", 6], ["Sun", 0]];
@@ -34,11 +32,9 @@ function CapacityPreview({ hours, days }) {
 }
 
 function Settings() {
-  const { prefs, savePrefs } = useData();
-  const { user, logout } = useAuth();
-  const router = useRouter();
+  const { prefs, rawPrefs, savePrefs } = useData();
   const toast = useToast();
-  const [form, setForm] = useState({ ...prefs, timezone: prefs.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone });
+  const [form, setForm] = useState({ ...prefs, timezone: rawPrefs?.timezone && rawPrefs.timezone !== "UTC" ? rawPrefs.timezone : Intl.DateTimeFormat().resolvedOptions().timeZone });
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
   const [err, setErr] = useState(null);
@@ -97,14 +93,9 @@ function Settings() {
               </form>
             </div>
           </Card>
-          <Card>
-            <CardHead title="Account" />
-            <div className="flex flex-wrap items-center gap-4 p-4 sm:p-5">
-              <span className="flex size-12 shrink-0 items-center justify-center bg-ink font-display text-2xl text-white" aria-hidden>{(user?.name ?? "S").trim()[0]?.toUpperCase()}</span>
-              <dl className="min-w-0 flex-1 basis-48 text-sm"><dt className="sr-only">Name</dt><dd className="font-medium">{user?.name}</dd><dt className="sr-only">Email</dt><dd className="t-small break-all">{user?.email}</dd></dl>
-              <Button variant="secondary" icon={LogOut} onClick={async () => { await logout(); router.replace("/login"); }}>Log out</Button>
-            </div>
-          </Card>
+          <RemindersCard />
+          <DepartmentCard />
+          <AccountCard />
         </div>
         <CapacityPreview hours={form.dailyStudyHours} days={form.availableDays} />
       </div>

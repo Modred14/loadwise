@@ -1,0 +1,3 @@
+import { ResetPassword } from "@/components/PasswordRecovery";
+export const metadata = { title: "Choose a new password", robots: { index: false } };
+export default function Page() { return <ResetPassword />; }

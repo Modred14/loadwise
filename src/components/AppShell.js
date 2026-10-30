@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Bell, BookOpen, CalendarDays, CheckSquare, ClipboardList, Gauge, LayoutDashboard, LogOut, MoreHorizontal, Settings } from "lucide-react";
+import { Bell, BookOpen, CalendarDays, CheckSquare, ClipboardList, FolderOpen, Gauge, Landmark, LayoutDashboard, LogOut, MoreHorizontal, Settings, Users } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useData } from "@/lib/store";
 import { Banner, Button, Dialog, cx } from "@/components/ui";
@@ -17,10 +17,21 @@ const NAV = [
   { href: "/planner", label: "Planner", icon: ClipboardList },
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/courses", label: "Courses", icon: BookOpen },
+  { href: "/materials", label: "Materials", icon: FolderOpen },
   { href: "/insights", label: "Insights", icon: Gauge },
   { href: "/notifications", label: "Notifications", icon: Bell },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
+// Shown only to people it applies to: members of a department, and department administrators.
+const SHARED_NAV = { href: "/shared-dates", label: "Shared dates", icon: Users };
+const DEPT_NAV = { href: "/department", label: "Department", icon: Landmark };
+const navFor = (user) => {
+  const items = [...NAV];
+  const at = items.findIndex((n) => n.href === "/insights");
+  const extra = [user?.departmentId ? SHARED_NAV : null, user?.role === "dept_admin" && user?.departmentId ? DEPT_NAV : null].filter(Boolean);
+  items.splice(at + 1, 0, ...extra);
+  return items;
+};
 const PRIMARY_MOBILE = NAV.slice(0, 4);
 const isActive = (pathname, href) => pathname === href || pathname.startsWith(href + "/");
 
@@ -108,10 +119,11 @@ export default function AppShell({ children }) {
     );
   }
 
-  const unread = (data?.warningsShown ?? []).filter((w) => w.severity !== "info" && !w.readAt).length;
+  const nav = navFor(user);
+  const unread = (data?.warningsShown ?? []).filter((w) => w.severity !== "info" && !w.readAt).length + (data?.notifications ?? []).filter((n) => !n.readAt).length;
   const countFor = (href) => (href === "/notifications" ? unread : 0);
-  const moreItems = NAV.slice(4);
-  const activeIndex = NAV.findIndex((n) => isActive(pathname, n.href));
+  const moreItems = nav.slice(PRIMARY_MOBILE.length);
+  const activeIndex = nav.findIndex((n) => isActive(pathname, n.href));
   const workload = data?.workload;
 
   const signOut = async () => {
@@ -126,7 +138,7 @@ export default function AppShell({ children }) {
         <LoadReadout workload={workload} />
         <nav aria-label="Main" className="relative flex flex-1 flex-col gap-0.5">
           {activeIndex >= 0 ? <span className="absolute top-0 left-0 z-10 h-10 w-[3px] bg-primary transition-transform duration-300 ease-(--ease)" style={{ transform: `translateY(calc(${activeIndex} * 2.625rem))` }} aria-hidden /> : null}
-          {NAV.map((n) => <NavLink key={n.href} item={n} count={countFor(n.href)} />)}
+          {nav.map((n) => <NavLink key={n.href} item={n} count={countFor(n.href)} />)}
         </nav>
         <div className="border-t border-line pt-3">
           <div className="flex items-center gap-3 px-2 pb-2">

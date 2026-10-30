@@ -18,7 +18,7 @@ function useNow() {
 
 export function DataProvider({ children }) {
   const now = useNow();
-  const [data, setData] = useState({ courses: [], tasks: [], sessions: [], warnings: [], prefs: null });
+  const [data, setData] = useState({ courses: [], tasks: [], sessions: [], warnings: [], prefs: null, notifications: [] });
   const [status, setStatus] = useState("loading"); // loading | ready | error
   const [error, setError] = useState(null);
   const syncSig = useRef("");
@@ -26,11 +26,12 @@ export function DataProvider({ children }) {
   const load = useCallback(async () => {
     setStatus((s) => (s === "ready" ? s : "loading"));
     try {
-      const [courses, tasks, sessions, warnings, prefs] = await Promise.all([
+      const [courses, tasks, sessions, warnings, prefs, notifications] = await Promise.all([
         api.courses.list(), api.tasks.list(), api.sessions.list(), api.warnings.list(),
         api.preferences.get().catch((e) => { if (e.status === 404) return null; throw e; }),
+        api.notifications.list().catch(() => []), // never block the app on the notification list
       ]);
-      setData({ courses, tasks, sessions, warnings, prefs });
+      setData({ courses, tasks, sessions, warnings, prefs, notifications });
       setStatus("ready");
       setError(null);
     } catch (e) {
@@ -91,11 +92,21 @@ export function DataProvider({ children }) {
     ].sort((a, b) => rank[a.severity] - rank[b.severity] || String(a.actionBy).localeCompare(String(b.actionBy)));
   }, [data.warnings, generated]);
 
+  // Records today's workload score on the server (it recomputes it from stored data), debounced so a
+  // burst of edits makes one request. This is what builds the trend history.
+  const snapTimer = useRef(null);
+  const snapshotSoon = useCallback(() => {
+    clearTimeout(snapTimer.current);
+    snapTimer.current = setTimeout(() => { api.workload.snapshot().catch(() => {}); }, 2500);
+  }, []);
+  useEffect(() => { if (status === "ready") snapshotSoon(); return () => clearTimeout(snapTimer.current); }, [status, snapshotSoon]);
+
   const refresh = useCallback(async (...keys) => {
-    const map = { courses: api.courses.list, tasks: api.tasks.list, sessions: api.sessions.list, warnings: api.warnings.list };
+    const map = { courses: api.courses.list, tasks: api.tasks.list, sessions: api.sessions.list, warnings: api.warnings.list, notifications: api.notifications.list };
     const results = await Promise.all(keys.map((k) => map[k]()));
     setData((d) => ({ ...d, ...Object.fromEntries(keys.map((k, i) => [k, results[i]])) }));
-  }, []);
+    if (keys.includes("tasks") || keys.includes("sessions")) snapshotSoon();
+  }, [snapshotSoon]);
 
   const actions = useMemo(() => ({
     reload: load,
@@ -112,10 +123,14 @@ export function DataProvider({ children }) {
     async savePrefs(body) { const saved = await api.preferences.put(body); setData((d) => ({ ...d, prefs: saved ?? body })); },
     async dismissWarning(id) { await api.warnings.dismiss(id); await refresh("warnings"); },
     async readWarning(id) { await api.warnings.read(id); await refresh("warnings"); },
+    async readNotification(id) { await api.notifications.read(id); await refresh("notifications"); },
+    async readAllNotifications() { await api.notifications.readAll(); await refresh("notifications"); },
+    async rankCourses(order) { await api.courses.rank(order); await refresh("courses"); },
+    refreshNotifications: () => refresh("notifications"),
   }), [load, refresh]);
 
   const value = useMemo(
-    () => ({ ...data, prefs, status, error, now, workload, plan, warningsShown, ...actions }),
+    () => ({ ...data, prefs, rawPrefs: data.prefs, status, error, now, workload, plan, warningsShown, ...actions }),
     [data, prefs, status, error, now, workload, plan, warningsShown, actions],
   );
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
