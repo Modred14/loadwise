@@ -1,3 +1,4 @@
+// src/components/settings-sections.js
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -6,6 +7,8 @@ import { Badge, Banner, Button, Card, CardHead, Dialog, Field, Input, Select, cx
 import { api } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth";
 import { useData } from "@/lib/store";
+import { PasswordInput, PasswordStrength } from "@/components/PasswordField";
+import { passwordProblem } from "@/lib/password";
 
 /* ------------------------------------------------------------ Department */
 export function DepartmentCard() {
@@ -146,7 +149,7 @@ export function RemindersCard() {
 /* --------------------------------------------------------------- Account */
 function PasswordForm() {
   const toast = useToast();
-  const [f, setF] = useState({ currentPassword: "", newPassword: "" });
+  const [f, setF] = useState({ currentPassword: "", newPassword: "", confirm: "" });
   const [errs, setErrs] = useState({});
   const [err, setErr] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -155,18 +158,24 @@ function PasswordForm() {
     if (busy) return;
     const v = {};
     if (!f.currentPassword) v.currentPassword = "Enter your current password";
-    if (f.newPassword.length < 8) v.newPassword = "Use at least 8 characters";
+    const problem = passwordProblem(f.newPassword);
+    if (problem) v.newPassword = problem;
+    if (!f.confirm) v.confirm = "Confirm your new password";
+    else if (f.confirm !== f.newPassword) v.confirm = "Passwords do not match";
     setErrs(v);
     if (Object.keys(v).length) return;
     setBusy(true); setErr(null);
-    try { await api.auth.changePassword(f); setF({ currentPassword: "", newPassword: "" }); toast("Password changed. Other devices were signed out."); } catch (x) { setErr(x.message); setErrs(x.fields ?? {}); } finally { setBusy(false); }
+    try { await api.auth.changePassword({ currentPassword: f.currentPassword, newPassword: f.newPassword }); setF({ currentPassword: "", newPassword: "", confirm: "" }); toast("Password changed. Other devices were signed out."); } catch (x) { setErr(x.message); setErrs(x.fields ?? {}); } finally { setBusy(false); }
   };
+  const set = (k) => (e) => { const value = e.target.value; setF((x) => ({ ...x, [k]: value })); };
   return (
-    <form onSubmit={submit} noValidate className="grid gap-3 sm:grid-cols-2">
-      {err ? <div className="sm:col-span-2"><Banner title="Could not change password">{err}</Banner></div> : null}
-      <Field label="Current password" htmlFor="pw-cur" error={errs.currentPassword}><Input id="pw-cur" type="password" autoComplete="current-password" value={f.currentPassword} onChange={(e) => setF((x) => ({ ...x, currentPassword: e.target.value }))} aria-invalid={!!errs.currentPassword} /></Field>
-      <Field label="New password" htmlFor="pw-new" error={errs.newPassword}><Input id="pw-new" type="password" autoComplete="new-password" value={f.newPassword} onChange={(e) => setF((x) => ({ ...x, newPassword: e.target.value }))} aria-invalid={!!errs.newPassword} /></Field>
-      <div className="sm:col-span-2"><Button type="submit" variant="secondary" icon={KeyRound} loading={busy}>Change password</Button></div>
+    <form onSubmit={submit} noValidate className="grid max-w-md gap-4">
+      {err ? <Banner title="Could not change password">{err}</Banner> : null}
+      <Field label="Current password" htmlFor="pw-cur" error={errs.currentPassword}><PasswordInput id="pw-cur" autoComplete="current-password" value={f.currentPassword} onChange={set("currentPassword")} aria-invalid={!!errs.currentPassword} /></Field>
+      <Field label="New password" htmlFor="pw-new" error={errs.newPassword}><PasswordInput id="pw-new" autoComplete="new-password" value={f.newPassword} onChange={set("newPassword")} aria-invalid={!!errs.newPassword} aria-describedby="pw-rules" /></Field>
+      <PasswordStrength id="pw-rules" password={f.newPassword} />
+      <Field label="Confirm new password" htmlFor="pw-confirm" error={errs.confirm}><PasswordInput id="pw-confirm" autoComplete="new-password" value={f.confirm} onChange={set("confirm")} aria-invalid={!!errs.confirm} /></Field>
+      <div><Button type="submit" variant="secondary" icon={KeyRound} loading={busy}>Change password</Button></div>
     </form>
   );
 }

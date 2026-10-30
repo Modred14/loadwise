@@ -1,3 +1,4 @@
+// src/server/testing.js
 // Integration-test harness: a throwaway real PostgreSQL database per test file.
 // Needs TEST_DATABASE_URL pointing at a server where the user can CREATE DATABASE (e.g. a local Postgres).
 import crypto from "node:crypto";
@@ -47,7 +48,7 @@ export function client(db, ip = "10.0.0.1") {
 let n = 0;
 export async function registerUser(c, over = {}) {
   n++;
-  const body = { name: `User ${n}`, email: `user${n}-${crypto.randomBytes(3).toString("hex")}@example.com`, password: "correct-horse-1", ...over };
+  const body = { name: `User ${n}`, email: `user${n}-${crypto.randomBytes(3).toString("hex")}@example.com`, password: "Correct-Horse-1!", ...over };
   const res = await c.post("/auth/register", body);
   if (res.status !== 201) throw new Error(`register failed: ${res.status} ${JSON.stringify(res.data)}`);
   return { ...res.data.user, email: body.email, password: body.password };

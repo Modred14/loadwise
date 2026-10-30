@@ -1,6 +1,10 @@
+// src/lib/api/client.js
 // The only place the frontend talks to the backend. Endpoints follow docs/API_CONTRACT.md.
 // The API ships inside this app at /api. Set NEXT_PUBLIC_API_BASE_URL only to point at a different backend.
-const BASE = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api").replace(/\/$/, "");
+// Only a path ("/api") or an http(s) URL is a valid API base. Anything else (an empty value, or a database
+// URL pasted by mistake) is ignored so the app falls back to its own /api instead of failing every request.
+const RAW = process.env.NEXT_PUBLIC_API_BASE_URL;
+const BASE = (RAW && /^(\/|https?:\/\/)/.test(RAW) ? RAW : "/api").replace(/\/$/, "");
 export const apiConfigured = BASE.length > 0;
 
 export class ApiError extends Error {

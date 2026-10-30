@@ -1,3 +1,4 @@
+// src/server/core.test.js
 import test, { before, after } from "node:test";
 import assert from "node:assert/strict";
 import { client, createTestDb, hasTestDb, registerUser } from "./testing.js";
@@ -18,7 +19,7 @@ test("register, me, logout, login; cookie is HttpOnly and SameSite", opts, async
   assert.equal(me.status, 200);
   assert.equal(me.data.user.email, u.email);
   assert.ok(!JSON.stringify(me.data).includes("password"));
-  const reg = await client(env.db, "1.1.1.2").raw("POST", "/auth/register", { name: "X", email: "cookie@example.com", password: "correct-horse-1" }, {});
+  const reg = await client(env.db, "1.1.1.2").raw("POST", "/auth/register", { name: "X", email: "cookie@example.com", password: "Correct-Horse-1!" }, {});
   const sc = reg.headers.getSetCookie()[0];
   assert.match(sc, /HttpOnly/); assert.match(sc, /SameSite=Lax/);
   assert.equal((await c.post("/auth/logout")).status, 204);
@@ -34,7 +35,7 @@ test("bad credentials and unknown email give the same generic error; duplicate e
   const unknown = await client(env.db, "1.1.1.5").post("/auth/login", { email: "nobody@example.com", password: "nope-nope-1" });
   assert.equal(wrong.status, 401); assert.equal(unknown.status, 401);
   assert.equal(wrong.data.error.message, unknown.data.error.message);
-  const dup = await client(env.db, "1.1.1.6").post("/auth/register", { name: "D", email: u.email.toUpperCase(), password: "correct-horse-1" });
+  const dup = await client(env.db, "1.1.1.6").post("/auth/register", { name: "D", email: u.email.toUpperCase(), password: "Correct-Horse-1!" });
   assert.equal(dup.status, 409);
 });
 
@@ -42,6 +43,27 @@ test("registration validates fields", opts, async () => {
   const r = await client(env.db, "1.1.1.7").post("/auth/register", { name: "", email: "bad", password: "short" });
   assert.equal(r.status, 400);
   assert.deepEqual(Object.keys(r.data.error.fields).sort(), ["email", "name", "password"]);
+});
+
+test("password policy is enforced on the server, not just in the form", opts, async () => {
+  const weak = {
+    "alllowercase1!": "an uppercase letter",
+    "ALLUPPERCASE1!": "a lowercase letter",
+    "NoNumbersHere!": "a number",
+    "NoSpecial1234": "a special character",
+    "Ab1!": "at least 8 characters",
+  };
+  let n = 0;
+  for (const [password, expected] of Object.entries(weak)) {
+    const r = await client(env.db, `3.3.3.${++n}`).post("/auth/register", { name: "W", email: `weak${n}@example.com`, password });
+    assert.equal(r.status, 400, password);
+    assert.ok(r.data.error.fields.password.includes(expected), `${password}: ${r.data.error.fields.password}`);
+  }
+  const common = await client(env.db, "3.3.3.50").post("/auth/register", { name: "W", email: "common@example.com", password: "Password1!" });
+  assert.equal(common.status, 400);
+  assert.match(common.data.error.fields.password, /too common/);
+  const ok = await client(env.db, "3.3.3.51").post("/auth/register", { name: "Strong", email: "strong@example.com", password: "Tr0ub4dor&Horse" });
+  assert.equal(ok.status, 201);
 });
 
 test("login is rate limited per email", opts, async () => {
@@ -201,8 +223,8 @@ test("password change signs out other devices; forgot/reset works and tokens are
   const phone = client(env.db, "1.1.11.1"), laptop = client(env.db, "1.1.11.2");
   const u = await registerUser(phone);
   await laptop.post("/auth/login", { email: u.email, password: u.password });
-  assert.equal((await phone.post("/auth/change-password", { currentPassword: "wrong-wrong", newPassword: "another-pass-1" })).status, 400);
-  assert.equal((await phone.post("/auth/change-password", { currentPassword: u.password, newPassword: "another-pass-1" })).status, 204);
+  assert.equal((await phone.post("/auth/change-password", { currentPassword: "wrong-wrong", newPassword: "Another-Pass-1!" })).status, 400);
+  assert.equal((await phone.post("/auth/change-password", { currentPassword: u.password, newPassword: "Another-Pass-1!" })).status, 204);
   assert.equal((await laptop.get("/auth/me")).status, 401);
   assert.equal((await phone.get("/auth/me")).status, 200);
 
@@ -214,9 +236,9 @@ test("password change signs out other devices; forgot/reset works and tokens are
   await new Promise((r) => setTimeout(r, 100));
   assert.equal(sent.length, 1);
   const token = /token=([\w-]+)/.exec(sent[0].text)[1];
-  assert.equal((await anon.post("/auth/reset", { token, password: "brand-new-pass-1" })).status, 204);
-  assert.equal((await anon.post("/auth/reset", { token, password: "brand-new-pass-2" })).status, 400); // single use
+  assert.equal((await anon.post("/auth/reset", { token, password: "Brand-New-Pass-1!" })).status, 204);
+  assert.equal((await anon.post("/auth/reset", { token, password: "Brand-New-Pass-2!" })).status, 400); // single use
   assert.equal((await phone.get("/auth/me")).status, 401); // all sessions revoked
-  assert.equal((await anon.post("/auth/login", { email: u.email, password: "brand-new-pass-1" })).status, 200);
+  assert.equal((await anon.post("/auth/login", { email: u.email, password: "Brand-New-Pass-1!" })).status, 200);
   setEmailTransport(null);
 });

@@ -1,6 +1,8 @@
+// src/server/auth.js
 import crypto from "node:crypto";
 import { promisify } from "node:util";
 import { HttpError } from "./http.js";
+import { passwordProblem } from "../lib/password.js";
 
 const scrypt = promisify(crypto.scrypt);
 export const SESSION_COOKIE = "lw_session";
@@ -27,9 +29,10 @@ export const DUMMY_HASH = await hashPassword("not-a-real-password");
 export const sha256 = (s) => crypto.createHash("sha256").update(s).digest("hex");
 export const newToken = () => crypto.randomBytes(32).toString("base64url");
 
+// Same rules as the sign-up form (src/lib/password.js), enforced here so they cannot be skipped.
 export function validatePassword(f, name, v) {
-  if (typeof v !== "string" || v.length < 8) f.fail(name, "Use at least 8 characters");
-  else if (v.length > 200) f.fail(name, "Use at most 200 characters");
+  const problem = passwordProblem(v);
+  if (problem) f.fail(name, problem);
   else f.values[name] = v;
 }
 

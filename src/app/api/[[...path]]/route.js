@@ -1,3 +1,4 @@
+// src/app/api/[[...path]]/route.js
 // Single entry point for the whole backend: every /api/* request is handed to the router in src/server.
 // Importing routes.js registers all handlers (auth, courses, tasks, cron, ...).
 import { handle } from "@/server/routes.js";

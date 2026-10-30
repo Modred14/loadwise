@@ -1,30 +1,29 @@
+// src/components/AuthForm.js
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff } from "lucide-react";
+import { Check } from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import { Banner, Button, Field, Input, Select } from "@/components/ui";
 import { api } from "@/lib/api/client";
-import { Logo } from "@/components/brand";
-import { LoadRail } from "@/components/viz";
+import { passwordProblem } from "@/lib/password";
+import { Banner, Button, Field, Input, Select } from "@/components/ui";
+import { AuthHeading, AuthLayout } from "@/components/AuthLayout";
+import { PasswordInput, PasswordStrength } from "@/components/PasswordField";
 
-const POINTS = [
-  ["Every deadline in one place", "Courses, tests, assignments and exams, with the preparation each needs."],
-  ["Warnings before the crunch", "What is wrong, why it matters, and what to do next."],
-  ["A plan that fits your hours", "Study sessions scheduled before each deadline."],
-];
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const FIELD_ORDER = ["name", "email", "password", "confirm"];
 
 export default function AuthForm({ mode }) {
   const isRegister = mode === "register";
   const { status, login, register } = useAuth();
   const router = useRouter();
-  const [form, setForm] = useState({ name: "", email: "", password: "", departmentId: "" });
+  const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "", departmentId: "" });
   const [depts, setDepts] = useState([]);
-  const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [fields, setFields] = useState({});
+  const [confirmTouched, setConfirmTouched] = useState(false);
 
   useEffect(() => { if (status === "authenticated") router.replace("/dashboard"); }, [status, router]);
   useEffect(() => {
@@ -34,20 +33,42 @@ export default function AuthForm({ mode }) {
     return () => { live = false; };
   }, [isRegister]);
 
-  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
-  const submit = async (e) => {
-    e.preventDefault();
+  const set = (key) => (e) => {
+    const value = e.target.value;
+    setForm((f) => ({ ...f, [key]: value }));
+    // Editing a field clears its own error (and the confirm error when the password it must match changes).
+    setFields((f) => (f[key] || (key === "password" && f.confirm) ? { ...f, [key]: undefined, ...(key === "password" ? { confirm: undefined } : null) } : f));
+  };
+
+  const validate = () => {
+    const e = {};
+    if (isRegister && !form.name.trim()) e.name = "Enter your name";
+    if (!EMAIL.test(form.email.trim())) e.email = "Enter a valid email address";
+    if (isRegister) {
+      const problem = passwordProblem(form.password);
+      if (problem) e.password = problem;
+      if (!form.confirm) e.confirm = "Confirm your password";
+      else if (form.confirm !== form.password) e.confirm = "Passwords do not match";
+    } else if (!form.password) {
+      e.password = "Enter your password";
+    }
+    return e;
+  };
+
+  const submit = async (ev) => {
+    ev.preventDefault();
     if (busy) return;
-    const local = {};
-    if (isRegister && !form.name.trim()) local.name = "Enter your name";
-    if (!/^\S+@\S+\.\S+$/.test(form.email)) local.email = "Enter a valid email address";
-    if (form.password.length < (isRegister ? 8 : 1)) local.password = isRegister ? "Use at least 8 characters" : "Enter your password";
+    const local = validate();
     setFields(local);
-    if (Object.keys(local).length) return;
-    setBusy(true);
     setError(null);
+    const first = FIELD_ORDER.find((k) => local[k]);
+    if (first) { document.getElementById(first)?.focus(); return; }
+    setBusy(true);
     try {
-      await (isRegister ? register({ name: form.name.trim(), email: form.email.trim(), password: form.password, ...(form.departmentId ? { departmentId: form.departmentId } : {}) }) : login({ email: form.email.trim(), password: form.password }));
+      const email = form.email.trim();
+      await (isRegister
+        ? register({ name: form.name.trim(), email, password: form.password, ...(form.departmentId ? { departmentId: form.departmentId } : {}) })
+        : login({ email, password: form.password }));
       router.replace("/dashboard");
     } catch (err) {
       setError(err.message);
@@ -57,63 +78,68 @@ export default function AuthForm({ mode }) {
     }
   };
 
-  return (
-    <div className="grid min-h-dvh lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
-      {/* Brand side: desktop only, the same instrument language as the product */}
-      <aside className="panel hidden flex-col justify-between border-r border-line-strong p-10 lg:flex xl:p-14">
-        <Logo dark />
-        <div>
-          <h2 className="t-display text-[3.5rem] text-balance xl:text-[4.25rem]">{isRegister ? "Start seeing your semester clearly." : "Welcome back to a clearer semester."}</h2>
-          <LoadRail score={isRegister ? 34 : 72} height="3rem" className="mt-10 max-w-md" />
-          <ul className="mt-10 flex max-w-md flex-col gap-5">
-            {POINTS.map(([t, b]) => <li key={t} className="flex gap-3"><span className="mt-2 size-2 shrink-0 bg-signal" aria-hidden /><p className="text-sm"><span className="font-semibold">{t}.</span> <span className="text-(--panel-muted)">{b}</span></p></li>)}
-          </ul>
-        </div>
-        <p className="t-small">A practical indicator, not a prediction of academic outcomes.</p>
-      </aside>
+  const mismatch = form.confirm.length > 0 && form.confirm !== form.password;
+  const confirmError = fields.confirm ?? (confirmTouched && mismatch ? "Passwords do not match" : undefined);
+  const confirmMatches = form.confirm.length > 0 && !mismatch;
 
-      <main id="main" className="flex flex-col px-4 py-6 sm:px-10 lg:justify-center">
-        <div className="mb-8 lg:hidden"><Logo /></div>
-        <div className="anim-page mx-auto w-full max-w-sm">
-          <p className="t-label">{isRegister ? "Get started" : "Your account"}</p>
-          <h1 className="t-page mt-2 text-[2.5rem]">{isRegister ? "Create your account" : "Log in"}</h1>
-          <p className="t-small mt-2 text-[0.9375rem]">{isRegister ? "Track your courses and deadlines." : "Welcome back."}</p>
-          {status === "unconfigured" ? (
-            <div className="mt-5"><Banner tone="warning" title="Backend not connected">Set NEXT_PUBLIC_API_BASE_URL to sign in.</Banner></div>
-          ) : null}
-          {error ? <div className="mt-5"><Banner title={isRegister ? "Could not create account" : "Could not log in"}>{error}</Banner></div> : null}
-          <form onSubmit={submit} noValidate className="mt-6 flex flex-col gap-4">
-            {isRegister ? (
-              <Field label="Name" htmlFor="name" error={fields.name}>
-                <Input id="name" autoComplete="name" value={form.name} onChange={set("name")} aria-invalid={!!fields.name} />
-              </Field>
-            ) : null}
-            <Field label="Email" htmlFor="email" error={fields.email}>
-              <Input id="email" type="email" inputMode="email" autoComplete="email" value={form.email} onChange={set("email")} aria-invalid={!!fields.email} />
+  return (
+    <AuthLayout headline={isRegister ? "Know your hardest week before it arrives." : "Your deadlines, in order."}>
+      <AuthHeading
+        title={isRegister ? "Create your account" : "Welcome back"}
+        lead={isRegister ? "Add your courses and see how heavy each week really is." : "Log in to see what is due and what to do first."}
+      />
+
+      {status === "unconfigured" ? (
+        <div className="mt-6"><Banner tone="warning" title="Cannot find the API">NEXT_PUBLIC_API_BASE_URL is set to an empty value. Remove it so the app uses its own /api.</Banner></div>
+      ) : null}
+      {error ? <div className="mt-6"><Banner title={isRegister ? "Could not create your account" : "Could not log in"}>{error}</Banner></div> : null}
+
+      <form onSubmit={submit} noValidate className="mt-8 flex flex-col gap-5">
+        {isRegister ? (
+          <Field label="Full name" htmlFor="name" error={fields.name}>
+            <Input id="name" autoComplete="name" value={form.name} onChange={set("name")} aria-invalid={!!fields.name} className="min-h-12" />
+          </Field>
+        ) : null}
+
+        <Field label="Email address" htmlFor="email" error={fields.email}>
+          <Input id="email" type="email" inputMode="email" autoComplete="email" autoCapitalize="none" spellCheck={false} placeholder="you@university.edu" value={form.email} onChange={set("email")} aria-invalid={!!fields.email} className="min-h-12" />
+        </Field>
+
+        <Field label="Password" htmlFor="password" error={fields.password}>
+          <PasswordInput id="password" autoComplete={isRegister ? "new-password" : "current-password"} value={form.password} onChange={set("password")} aria-invalid={!!fields.password} aria-describedby={isRegister ? "password-rules" : undefined} />
+        </Field>
+
+        {isRegister ? (
+          <>
+            <PasswordStrength id="password-rules" password={form.password} />
+            <Field
+              label="Confirm password"
+              htmlFor="confirm"
+              error={confirmError}
+              hint={confirmMatches ? <span className="inline-flex items-center gap-1.5 font-medium text-primary"><Check size={14} aria-hidden />Passwords match</span> : undefined}
+            >
+              <PasswordInput id="confirm" autoComplete="new-password" value={form.confirm} onChange={set("confirm")} onBlur={() => setConfirmTouched(true)} aria-invalid={!!confirmError} />
             </Field>
-            <Field label="Password" htmlFor="password" error={fields.password} hint={isRegister ? "At least 8 characters." : undefined}>
-              <div className="relative">
-                <Input id="password" type={show ? "text" : "password"} autoComplete={isRegister ? "new-password" : "current-password"} value={form.password} onChange={set("password")} aria-invalid={!!fields.password} className="pr-12" />
-                <button type="button" onClick={() => setShow((s) => !s)} aria-label={show ? "Hide password" : "Show password"} aria-pressed={show} className="absolute top-0 right-0 flex size-(--ctl-h) items-center justify-center text-muted hover:text-ink">
-                  {show ? <EyeOff size={18} aria-hidden /> : <Eye size={18} aria-hidden />}
-                </button>
-              </div>
-            </Field>
-            {isRegister && depts.length ? (
+            {depts.length ? (
               <Field label="Department (optional)" htmlFor="departmentId" hint="Lets you receive official dates from your course reps. You can change it later in Settings.">
-                <Select id="departmentId" value={form.departmentId} onChange={set("departmentId")}><option value="">Not now</option>{depts.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</Select>
+                <Select id="departmentId" value={form.departmentId} onChange={set("departmentId")} className="min-h-12"><option value="">Not now</option>{depts.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</Select>
               </Field>
             ) : null}
-            {!isRegister ? <p className="-mt-1 text-right"><Link href="/forgot-password" className="t-small font-medium text-primary underline underline-offset-4">Forgot password?</Link></p> : null}
-            <Button type="submit" loading={busy} disabled={status === "unconfigured"} className="mt-1 min-h-12">{isRegister ? "Create account" : "Log in"}</Button>
-          </form>
-          <p className="t-small mt-6 text-[0.9375rem]">
-            {isRegister ? "Already registered? " : "New to LoadWise? "}
-            <Link href={isRegister ? "/login" : "/register"} className="font-medium text-primary underline underline-offset-4">{isRegister ? "Log in" : "Create an account"}</Link>
-          </p>
-          <p className="mt-8"><Link href="/" className="t-small underline underline-offset-4 hover:text-ink">Back to home</Link></p>
-        </div>
-      </main>
-    </div>
+          </>
+        ) : (
+          <p className="-mt-2 text-right"><Link href="/forgot-password" className="t-small font-medium text-primary underline underline-offset-4">Forgot password?</Link></p>
+        )}
+
+        <Button type="submit" loading={busy} disabled={status === "unconfigured"} className="mt-1 min-h-12 w-full text-[0.9375rem]">
+          {isRegister ? "Create account" : "Log in"}
+        </Button>
+      </form>
+
+      <p className="mt-8 text-[0.9375rem] text-muted">
+        {isRegister ? "Already have an account? " : "New to LoadWise? "}
+        <Link href={isRegister ? "/login" : "/register"} className="font-medium text-primary underline underline-offset-4">{isRegister ? "Log in" : "Create an account"}</Link>
+      </p>
+      <p className="mt-4"><Link href="/" className="t-small underline underline-offset-4 hover:text-ink">Back to home</Link></p>
+    </AuthLayout>
   );
 }
