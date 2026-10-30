@@ -105,7 +105,7 @@ export default function Home() {
         <section className="mx-auto grid w-full max-w-6xl items-center gap-10 px-4 pt-10 pb-14 lg:grid-cols-12 lg:gap-8 lg:px-8 lg:pt-16 lg:pb-20">
           <div className="lg:col-span-6">
             <p className="t-label">Academic load tracker · early warnings · study planner</p>
-            <h1 className="t-display mt-5 text-[3.rem] text-balance sm:text-[4rem] lg:text-[5rem]">See the crunch <em className="text-primary">coming</em> before it arrives.</h1>
+            <h1 className="t-display mt-5 text-[3.25rem] text-balance sm:text-[4.5rem] lg:text-[5.25rem]">See the crunch <em className="text-primary">coming</em> before it arrives.</h1>
             <p className="mt-6 max-w-xl text-[1.0625rem] leading-relaxed text-muted">
               When tests, assignments and exams land in the same week, a to-do list does not tell you what to do first or whether it all fits. LoadWise measures your real workload, warns you early, and plans your study time.
             </p>
@@ -207,7 +207,7 @@ export default function Home() {
           </div>
 
           <div className="mt-12 flex flex-col gap-2 border-t border-line pt-6 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
-            <p>© {new Date().getFullYear()} LoadWise. All rights reserved.</p>
+            <p>© 2026 LoadWise. All rights reserved.</p>
             <p>Built to help students plan ahead.</p>
           </div>
         </div>
