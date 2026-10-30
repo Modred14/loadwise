@@ -105,7 +105,7 @@ export default function Home() {
         <section className="mx-auto grid w-full max-w-6xl items-center gap-10 px-4 pt-10 pb-14 lg:grid-cols-12 lg:gap-8 lg:px-8 lg:pt-16 lg:pb-20">
           <div className="lg:col-span-6">
             <p className="t-label">Academic load tracker · early warnings · study planner</p>
-            <h1 className="t-display mt-5 text-[3rem] text-balance sm:text-[4rem] lg:text-[5rem]">See the crunch <em className="text-primary">coming</em> before it arrives.</h1>
+            <h1 className="t-display mt-5 text-[3.rem] text-balance sm:text-[4rem] lg:text-[5rem]">See the crunch <em className="text-primary">coming</em> before it arrives.</h1>
             <p className="mt-6 max-w-xl text-[1.0625rem] leading-relaxed text-muted">
               When tests, assignments and exams land in the same week, a to-do list does not tell you what to do first or whether it all fits. LoadWise measures your real workload, warns you early, and plans your study time.
             </p>
@@ -172,10 +172,44 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="border-t border-line-strong">
-        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-6 text-sm text-muted lg:px-8">
-          <Logo />
-          <p className="max-w-md">A practical indicator based on what you enter. Not a prediction of academic outcomes.</p>
+      <footer className="border-t border-line-strong bg-bg">
+        <div className="mx-auto w-full max-w-6xl px-4 py-12 lg:px-8 lg:py-14">
+          <div className="grid gap-10 lg:grid-cols-12 lg:gap-8">
+            <div className="lg:col-span-5">
+              <Logo />
+              <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted">
+                Academic workload tracking, early warnings and study planning, built for university students.
+              </p>
+            </div>
+
+            <nav aria-label="Footer" className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:col-span-7">
+              <div>
+                <h2 className="t-label text-ink">Product</h2>
+                <ul className="mt-4 space-y-3 text-sm">
+                  <li><a href="#features" className="text-muted transition-colors hover:text-ink">What it does</a></li>
+                  <li><a href="#score" className="text-muted transition-colors hover:text-ink">The score</a></li>
+                </ul>
+              </div>
+              <div>
+                <h2 className="t-label text-ink">Account</h2>
+                <ul className="mt-4 space-y-3 text-sm">
+                  <li><Link href="/login" className="text-muted transition-colors hover:text-ink">Log in</Link></li>
+                  <li><Link href="/register" className="text-muted transition-colors hover:text-ink">Create account</Link></li>
+                </ul>
+              </div>
+              <div className="col-span-2 sm:col-span-1">
+                <h2 className="t-label text-ink">About the score</h2>
+                <p className="mt-4 text-sm leading-relaxed text-muted">
+                  A practical indicator based on what you enter. Not a prediction of academic outcomes.
+                </p>
+              </div>
+            </nav>
+          </div>
+
+          <div className="mt-12 flex flex-col gap-2 border-t border-line pt-6 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
+            <p>© {new Date().getFullYear()} LoadWise. All rights reserved.</p>
+            <p>Built to help students plan ahead.</p>
+          </div>
         </div>
       </footer>
     </div>
