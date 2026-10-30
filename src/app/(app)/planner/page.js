@@ -228,7 +228,7 @@ function Planner() {
                         className={cx("flex min-h-[4.5rem] flex-col items-center justify-between rounded-md border py-2 transition-colors", on ? "border-ink bg-ink text-white" : k === todayKey ? "border-primary bg-primary-soft" : "border-line bg-surface")}>
                         <span className={cx("t-label", on && "text-white/70")}>{DOW.format(parseKey(k)).slice(0, 3)}</span>
                         <span className="font-display text-xl leading-none">{parseKey(k).getDate()}</span>
-                        <span className="flex h-3 items-end" aria-hidden><span className={cx("block w-3", on ? "bg-signal" : "bg-line-strong")} style={{ height: mins ? Math.max(2, (mins / peak) * 12) : 0 }} /></span>
+                        <span className="flex h-3 items-end" aria-hidden><span className={cx("block w-3", on ? "bg-white" : "bg-line-strong")} style={{ height: mins ? Math.max(2, (mins / peak) * 12) : 0 }} /></span>
                       </button>
                     );
                   })}

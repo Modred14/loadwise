@@ -8,9 +8,9 @@ import { formatDay, formatHours } from "@/lib/format";
 import { toDateKey } from "@/lib/engine";
 
 const PARTS = [
-  { key: "urgency", label: "Urgency", color: "var(--primary)", help: "How much weighted work sits close to now." },
-  { key: "squeeze", label: "Time squeeze", color: "var(--zone-high)", help: "Whether preparation fits the study hours available before each deadline." },
-  { key: "crunch", label: "Overlap", color: "#0f7f8c", help: "How many deadlines fall inside the busiest 3-day window." },
+  { key: "urgency", label: "Urgency", color: "var(--zone-high)", help: "How much weighted work sits close to now." },
+  { key: "squeeze", label: "Time squeeze", color: "var(--zone-medium)", help: "Whether preparation fits the study hours available before each deadline." },
+  { key: "crunch", label: "Overlap", color: "var(--zone-low)", help: "How many deadlines fall inside the busiest 3-day window." },
 ];
 const MEANING = {
   low: "Comfortable. You have room to get ahead.",
@@ -30,7 +30,7 @@ function Insights() {
     <>
       <PageHeader eyebrow="Understand the number" title="Workload insights" description="What is driving your score, based on your actual tasks and study hours." />
       <div className="stagger grid items-start gap-5 lg:grid-cols-12 *:min-w-0">
-        <section aria-label="Workload score" className="panel rounded-lg p-5 sm:p-7 lg:col-span-7">
+        <section aria-label="Workload score" className="panel rounded-lg border border-line-strong p-5 sm:p-7 lg:col-span-7">
           <p className="t-label">Workload score</p>
           <div className="mt-4"><ScoreMeter workload={w} /></div>
           <p className="mt-6 border-t border-line pt-4 text-sm text-panel-ink/80">{MEANING[w.category]}</p>

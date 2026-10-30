@@ -8,7 +8,7 @@ import { useData } from "@/lib/store";
 const GROUPS = [
   { key: "critical", label: "Critical", dot: "bg-crit" },
   { key: "warning", label: "Warnings", dot: "bg-[var(--zone-high)]" },
-  { key: "info", label: "For your information", dot: "bg-primary" },
+  { key: "info", label: "For your information", dot: "bg-[var(--zone-medium)]" },
 ];
 
 function Notifications() {

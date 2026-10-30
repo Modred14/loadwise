@@ -74,7 +74,7 @@ function Dashboard() {
       <PageHeader eyebrow={formatDayLong(todayKey)} title={`${greeting}${first ? `, ${first}` : ""}.`} description="Here is where your workload stands." actions={<Button icon={CheckSquare} onClick={() => setTaskOpen(true)}>Add task</Button>} />
       <div className="stagger grid items-start gap-5 lg:grid-cols-12 *:min-w-0">
         {/* Instrument panel */}
-        <section aria-labelledby="load-h" className="panel rounded-lg p-5 sm:p-7 lg:col-span-7 lg:col-start-1 lg:row-start-1">
+        <section aria-labelledby="load-h" className="panel rounded-lg border border-line-strong p-5 sm:p-7 lg:col-span-7 lg:col-start-1 lg:row-start-1">
           <div className="flex flex-wrap items-center justify-between gap-x-3">
             <h2 id="load-h" className="t-label">Workload score</h2>
             <Link href="/insights" className={link}>How this is calculated <ArrowRight size={14} aria-hidden /></Link>

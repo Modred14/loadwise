@@ -2,46 +2,49 @@
 
 /* ==========================================================================
    LoadWise design tokens
-   Identity: a precision instrument for academic load, set on warm paper.
-   Solid colours only. No gradients anywhere.
+   Identity: a precision instrument for academic load.
+   Palette: WHITE background, BLACK text, BLUE brand. Nothing else.
+   Every other tone is a tint of those three (blue mixed with white, or black
+   at reduced opacity). Solid colours only. No gradients anywhere.
    ========================================================================== */
 :root {
-  /* Paper & ink */
+  /* White & black */
   --bg: #ffffff;
   --surface: #ffffff;
-  --surface-2: #fafafa;
-  --line: #e4e4e7;
-  --line-strong: #bfc0c6;
-  --ink: #14181f;
-  --muted: #565b64;
+  --surface-2: color-mix(in srgb, var(--primary) 4%, #ffffff);
+  --line: color-mix(in srgb, var(--primary) 16%, #ffffff);
+  --line-strong: color-mix(in srgb, var(--primary) 40%, #ffffff);
+  --ink: #000000;
+  --muted: rgb(0 0 0 / 0.68);
 
-  /* Brand: ultramarine, with its pressed edge colour */
+  /* Brand blue, with its pressed edge colour */
   --primary: #1f2f8a;
   --primary-hover: #1a2778;
   --primary-edge: #101a5c;
   --primary-soft: #e3e6f5;
-  --signal: #c6f04a; /* only ever used on dark surfaces */
+  --signal: var(--primary); /* accent inside .panel surfaces */
 
-  /* Semantic load colours (text-safe on their soft backgrounds) */
-  --ok: #1f6e4a;
-  --ok-soft: #dcefe3;
-  --warn: #7d4700;
-  --warn-soft: #f7e6c4;
-  --crit: #a8300f;
-  --crit-soft: #f8dcd2;
+  /* Semantic load colours, blue and black only (text-safe on their soft backgrounds).
+     Good and caution are blue; critical is black. Icons and labels carry the meaning too. */
+  --ok: var(--primary);
+  --ok-soft: var(--primary-soft);
+  --warn: var(--primary);
+  --warn-soft: color-mix(in srgb, var(--primary) 18%, #ffffff);
+  --crit: #000000;
+  --crit-soft: rgb(0 0 0 / 0.08);
 
-  /* Zone colours used by the rail and charts */
-  --zone-low: #2f8a5f;
-  --zone-medium: #3d55c7;
-  --zone-high: #cf7a00;
-  --zone-critical: #d23d1c;
+  /* Zone colours used by the rail and charts: light blue, blue, brand blue, black */
+  --zone-low: #6b86e6;
+  --zone-medium: #3a52c4;
+  --zone-high: #1f2f8a;
+  --zone-critical: #000000;
 
-  /* Dark instrument panel */
-  --panel: #12151c;
-  --panel-2: #1a1e27;
-  --panel-line: #2b303c;
-  --panel-ink: #eceae1;
-  --panel-muted: #a2a7b3;
+  /* Instrument panel: white with a blue hairline (set by .panel and its border classes) */
+  --panel: #ffffff;
+  --panel-2: var(--surface-2);
+  --panel-line: var(--line);
+  --panel-ink: var(--ink);
+  --panel-muted: var(--muted);
 
   --focus: #1f2f8a;
   --nav-h: 3.5rem;
@@ -52,15 +55,9 @@
   :root { --ctl-h: 2.75rem; } /* touch targets >= 44px on any viewport width */
 }
 
-/* Dark surfaces re-map the tokens so every component works inside them. */
+/* Instrument panels are white surfaces; add `border border-line-strong` where a panel needs an edge. */
 .panel {
-  --muted: var(--panel-muted);
-  --line: var(--panel-line);
-  --focus: var(--signal);
-  --zone-low: #5fd69b;
-  --zone-medium: #8ea4ff;
-  --zone-high: #f2b04a;
-  --zone-critical: #ff7a5c;
+  --focus: var(--primary);
   background: var(--panel);
   color: var(--panel-ink);
 }
@@ -97,7 +94,7 @@
   --radius-lg: 4px;
   --radius-xl: 6px;
   --shadow-key: 0 2px 0 var(--primary-edge);
-  --shadow-lift: 0 1px 0 rgb(20 24 31 / 0.04), 0 8px 24px -12px rgb(20 24 31 / 0.25);
+  --shadow-lift: 0 1px 0 rgb(0 0 0 / 0.04), 0 8px 24px -12px rgb(0 0 0 / 0.25);
 }
 
 html {
@@ -194,10 +191,10 @@ details > summary { list-style: none; } details > summary::-webkit-details-marke
 .sky-col .rt, .sky-col .lf { top: 0; height: 100%; width: calc(var(--h) * var(--k) * var(--u)); transform-origin: left; transform: rotateY(-90deg); }
 .sky-col .rt { left: 100%; background: var(--cs); }
 .sky-col .lf { left: 0; background: var(--cs); }
-.sky-col[data-zone="low"] { --ct: #7fe3b0; --cf: #3fae7b; --cs: #2d8a60; }
-.sky-col[data-zone="medium"] { --ct: #a9b8ff; --cf: #6f86ee; --cs: #5368cf; }
-.sky-col[data-zone="high"] { --ct: #ffd083; --cf: #e69a2a; --cs: #bf7a14; }
-.sky-col[data-zone="critical"] { --ct: #ff9b82; --cf: #e5593a; --cs: #b9411f; }
+.sky-col[data-zone="low"] { --ct: #a5b6f6; --cf: #6b86e6; --cs: #4a65cc; }
+.sky-col[data-zone="medium"] { --ct: #7a90e8; --cf: #3a52c4; --cs: #293d9c; }
+.sky-col[data-zone="high"] { --ct: #3a4fb0; --cf: #1f2f8a; --cs: #141f64; }
+.sky-col[data-zone="critical"] { --ct: #3d3d3d; --cf: #141414; --cs: #000000; }
 @keyframes lw-grow { from { --k: 0; } to { --k: 1; } }
 
 /* --------------------------------------------------------------------------

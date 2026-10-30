@@ -54,12 +54,12 @@ function NavLink({ item, count, compact }) {
 function LoadReadout({ workload }) {
   if (!workload) return null;
   return (
-    <Link href="/insights" className="panel group mx-1 mb-4 block rounded-lg p-3.5 transition-transform hover:-translate-y-px" aria-label={`Workload ${workload.score} of 100, ${workload.categoryLabel}. Open insights.`}>
+    <Link href="/insights" className="panel group mx-1 mb-4 block rounded-lg border border-line-strong p-3.5 transition-transform hover:-translate-y-px" aria-label={`Workload ${workload.score} of 100, ${workload.categoryLabel}. Open insights.`}>
       <div className="flex items-end justify-between">
         <span className="t-num tnum text-[2.75rem]">{workload.score}</span>
         <span className="pb-1 text-right">
           <span className="t-label block">Current load</span>
-          <span className="text-xs font-semibold" style={{ color: `var(--zone-${workload.category})` }}>{workload.categoryLabel}</span>
+          <span className="text-xs font-semibold">{workload.categoryLabel}</span>
         </span>
       </div>
       <LoadRail score={workload.score} labels={false} ticks={50} height="1.25rem" className="mt-3" />
@@ -142,7 +142,7 @@ export default function AppShell({ children }) {
           <Logo />
           <div className="flex items-center gap-1">
             {workload ? (
-              <Link href="/insights" aria-label={`Workload ${workload.score} of 100, ${workload.categoryLabel}`} className="panel flex h-11 items-center gap-2 rounded-md px-3">
+              <Link href="/insights" aria-label={`Workload ${workload.score} of 100, ${workload.categoryLabel}`} className="panel flex h-11 items-center gap-2 rounded-md border border-line-strong px-3">
                 <span className="size-2" style={{ background: `var(--zone-${workload.category})` }} aria-hidden />
                 <span className="tnum font-mono text-sm font-medium">{workload.score}</span>
               </Link>

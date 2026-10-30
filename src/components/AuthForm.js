@@ -52,7 +52,7 @@ export default function AuthForm({ mode }) {
   return (
     <div className="grid min-h-dvh lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
       {/* Brand side: desktop only, the same instrument language as the product */}
-      <aside className="panel hidden flex-col justify-between p-10 lg:flex xl:p-14">
+      <aside className="panel hidden flex-col justify-between border-r border-line-strong p-10 lg:flex xl:p-14">
         <Logo dark />
         <div>
           <h2 className="t-display text-[3.5rem] text-balance xl:text-[4.25rem]">{isRegister ? "Start seeing your semester clearly." : "Welcome back to a clearer semester."}</h2>

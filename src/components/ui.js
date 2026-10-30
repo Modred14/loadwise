@@ -15,7 +15,7 @@ const BUTTON = {
     "bg-surface text-ink border border-line-strong hover:border-ink hover:bg-surface-2 active:translate-y-px",
   ghost: "text-ink hover:bg-primary-soft active:bg-primary-soft",
   danger:
-    "bg-crit text-white shadow-[0_2px_0_#6e1d08] hover:-translate-y-px active:translate-y-0.5 active:shadow-none disabled:shadow-none disabled:hover:translate-y-0",
+    "bg-crit text-white shadow-[0_2px_0_#000000] hover:-translate-y-px active:translate-y-0.5 active:shadow-none disabled:shadow-none disabled:hover:translate-y-0",
 };
 
 export function Button({ variant = "primary", loading = false, disabled, className, children, icon: Icon, ...props }) {
@@ -158,7 +158,7 @@ export function SeverityBadge({ severity }) {
   return <Badge tone={severity}><Icon size={12} aria-hidden />{severity[0].toUpperCase() + severity.slice(1)}</Badge>;
 }
 
-const STRIP = { critical: "bg-crit", warning: "bg-warn", low: "bg-ok", info: "bg-primary", neutral: "bg-line-strong" };
+const STRIP = { critical: "bg-crit", warning: "bg-warn", low: "bg-[var(--zone-low)]", info: "bg-[var(--zone-medium)]", neutral: "bg-line-strong" };
 export function Banner({ tone = "critical", title, children, action }) {
   const Icon = tone === "critical" ? OctagonAlert : tone === "warning" ? AlertTriangle : tone === "low" ? CheckCircle2 : Info;
   return (
@@ -255,7 +255,7 @@ export function Dialog({ open, onClose, title, children, footer, wide }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className={cx("anim-sheet relative flex max-h-[92dvh] w-full flex-col rounded-t-xl border border-line-strong bg-surface shadow-[0_24px_60px_-20px_rgb(20_24_31/0.55)] sm:max-h-[88dvh] sm:rounded-lg", wide ? "sm:max-w-2xl" : "sm:max-w-lg")}
+        className={cx("anim-sheet relative flex max-h-[92dvh] w-full flex-col rounded-t-xl border border-line-strong bg-surface shadow-[0_24px_60px_-20px_rgb(0_0_0/0.55)] sm:max-h-[88dvh] sm:rounded-lg", wide ? "sm:max-w-2xl" : "sm:max-w-lg")}
       >
         <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-line-strong sm:hidden" aria-hidden />
         <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-3">
@@ -302,11 +302,11 @@ function ToastItem({ t, onDone }) {
     return () => clearTimeout(id);
   }, [t.id, t.tone, onDone]);
   return (
-    <div className="pointer-events-auto relative flex max-w-sm min-w-60 items-start gap-3 overflow-hidden rounded-md bg-ink py-3 pr-3 pl-4 text-sm text-white shadow-[0_12px_32px_-10px_rgb(20_24_31/0.6)]" style={{ animation: "lw-toast 240ms var(--ease) backwards" }}>
-      <Icon size={18} className={cx("mt-px shrink-0", t.tone === "error" ? "text-[#ff9b82]" : t.tone === "success" ? "text-signal" : "text-[#a9b8ff]")} aria-hidden />
+    <div className="pointer-events-auto relative flex max-w-sm min-w-60 items-start gap-3 overflow-hidden rounded-md border border-line-strong bg-surface py-3 pr-3 pl-4 text-sm text-ink shadow-[0_12px_32px_-10px_rgb(0_0_0/0.35)]" style={{ animation: "lw-toast 240ms var(--ease) backwards" }}>
+      <Icon size={18} className={cx("mt-px shrink-0", t.tone === "error" ? "text-crit" : "text-primary")} aria-hidden />
       <p className="min-w-0 flex-1 break-words">{t.message}</p>
-      <button type="button" onClick={() => onDone(t.id)} aria-label="Dismiss notification" className="-my-1 -mr-1 flex size-8 shrink-0 items-center justify-center rounded-sm text-white/70 hover:bg-white/10 hover:text-white"><X size={14} aria-hidden /></button>
-      <span className={cx("absolute inset-x-0 bottom-0 h-0.5 origin-left", t.tone === "error" ? "bg-[#ff9b82]" : "bg-signal")} style={{ animation: `lw-drain ${t.tone === "error" ? 6500 : 3800}ms linear forwards` }} aria-hidden />
+      <button type="button" onClick={() => onDone(t.id)} aria-label="Dismiss notification" className="-my-1 -mr-1 flex size-8 shrink-0 items-center justify-center rounded-sm text-muted hover:bg-primary-soft hover:text-ink"><X size={14} aria-hidden /></button>
+      <span className={cx("absolute inset-x-0 bottom-0 h-0.5 origin-left", t.tone === "error" ? "bg-crit" : "bg-primary")} style={{ animation: `lw-drain ${t.tone === "error" ? 6500 : 3800}ms linear forwards` }} aria-hidden />
     </div>
   );
 }

@@ -35,7 +35,7 @@ export default function Skyline() {
   }, []);
 
   return (
-    <div ref={wrap} className="sky" role="img" aria-label="Illustration: two weeks of deadlines drawn as a 3D skyline. Columns rise toward a cluster of deadlines in the second week, shown in amber and red.">
+    <div ref={wrap} className="sky" role="img" aria-label="Illustration: two weeks of deadlines drawn as a 3D skyline. Columns rise toward a cluster of deadlines in the second week, shown in dark blue and black.">
       <div ref={scene} className="sky-scene" aria-hidden>
         <div className="sky-slab" />
         {DAYS.map((v, i) => {

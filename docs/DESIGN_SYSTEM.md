@@ -1,6 +1,6 @@
 # LoadWise design system
 
-A precision instrument for academic load, set on warm paper. Solid colours only: **no gradients anywhere**.
+A precision instrument for academic load. **Palette: white background, black text, blue brand. Nothing else.** Every other tone is a tint of those three. Solid colours only: **no gradients anywhere**.
 
 ## Principles
 - **Near-square geometry.** Radii are 1 to 6px (`--radius-*`). Hairline borders, not heavy shadows.
@@ -11,11 +11,11 @@ A precision instrument for academic load, set on warm paper. Solid colours only:
 ## Tokens (`src/app/globals.css`)
 | Group | Tokens |
 | --- | --- |
-| Paper and ink | `--bg` `--surface` `--surface-2` `--line` `--line-strong` `--ink` `--muted` |
-| Brand | `--primary` `--primary-hover` `--primary-edge` `--primary-soft`; `--signal` (dark surfaces only) |
-| Semantic | `--ok` `--warn` `--crit` (+ `-soft`), text-safe on their soft backgrounds |
-| Zones (charts) | `--zone-low` `--zone-medium` `--zone-high` `--zone-critical` |
-| Dark instrument | `.panel` re-maps `--muted`, `--line`, `--focus` and the zone colours for dark surfaces |
+| White and black | `--bg` `--surface` `--surface-2` `--line` `--line-strong` `--ink` `--muted` (lines and surface tints are blue mixed with white; muted is black at reduced opacity) |
+| Brand | `--primary` `--primary-hover` `--primary-edge` `--primary-soft`; `--signal` (alias of `--primary`, used inside `.panel`) |
+| Semantic | `--ok` and `--warn` are brand blue, `--crit` is black (+ `-soft` tints), text-safe on their soft backgrounds |
+| Zones (charts) | `--zone-low` `--zone-medium` `--zone-high` `--zone-critical`: light blue, blue, brand blue, black |
+| Instrument panel | `.panel` is a white surface; add `border border-line-strong` where it needs an edge |
 
 Type: Instrument Serif (`font-display`, vendored in `src/fonts`, SIL OFL) for headlines and numerals; Geist for UI; Geist Mono for labels and data. Classes: `t-display`, `t-page`, `t-section`, `t-label`, `t-small`, `t-num`. These live in `@layer components` so Tailwind utilities can override them.
 

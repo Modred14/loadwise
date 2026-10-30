@@ -12,7 +12,7 @@ import { formatClock, formatDayLong, formatHours, formatMonth } from "@/lib/form
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 /** Deadline colour: overdue, exam/test, other. Completed items fade. */
-const tone = (t, todayKey) => (t.status === "completed" ? "bg-line-strong" : t.dueDate < todayKey ? "bg-crit" : t.type === "exam" || t.type === "test" ? "bg-[var(--zone-high)]" : "bg-primary");
+const tone = (t, todayKey) => (t.status === "completed" ? "bg-line-strong" : t.dueDate < todayKey ? "bg-crit" : t.type === "exam" || t.type === "test" ? "bg-[var(--zone-high)]" : "bg-[var(--zone-low)]");
 
 function Calendar() {
   const { tasks, courses, sessions, now } = useData();
@@ -106,7 +106,7 @@ function Calendar() {
           </div>
           <p className="t-small flex flex-wrap gap-x-4 gap-y-1 border-t border-line px-4 py-2.5">
             <span className="inline-flex items-center gap-1.5"><span className="block h-2 w-3 bg-[var(--zone-high)]" aria-hidden />Exam or test</span>
-            <span className="inline-flex items-center gap-1.5"><span className="block h-2 w-3 bg-primary" aria-hidden />Other deadline</span>
+            <span className="inline-flex items-center gap-1.5"><span className="block h-2 w-3 bg-[var(--zone-low)]" aria-hidden />Other deadline</span>
             <span className="inline-flex items-center gap-1.5"><span className="block h-2 w-3 bg-crit" aria-hidden />Overdue</span>
             <span className="inline-flex items-center gap-1.5"><span className="block h-2 w-3 bg-line-strong" aria-hidden />Completed</span>
           </p>

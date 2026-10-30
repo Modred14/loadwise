@@ -14,7 +14,7 @@ function CapacityPreview({ hours, days }) {
   const h = Number.isFinite(Number(hours)) ? Math.max(0, Math.min(16, Number(hours))) : 0;
   const total = h * days.length;
   return (
-    <section aria-label="Weekly capacity preview" className="panel rounded-lg p-5 lg:sticky lg:top-6">
+    <section aria-label="Weekly capacity preview" className="panel rounded-lg border border-line-strong p-5 lg:sticky lg:top-6">
       <p className="t-label">Weekly capacity</p>
       <p className="mt-3 flex items-end gap-2"><span className="t-num tnum text-[4rem]">{Math.round(total * 10) / 10}</span><span className="pb-1.5 text-sm text-panel-ink/70">hours / week</span></p>
       <div className="mt-5 flex h-24 items-end gap-1.5" role="img" aria-label={`Study hours per day: ${DAYS.map(([l, d]) => `${l} ${days.includes(d) ? h : 0}`).join(", ")}`}>

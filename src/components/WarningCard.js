@@ -3,7 +3,7 @@ import { Badge, Button, SeverityBadge } from "@/components/ui";
 import { cx } from "@/lib/cx";
 import { formatClock, formatDay } from "@/lib/format";
 
-const SEV_STRIP = { critical: "bg-crit", warning: "bg-[var(--zone-high)]", info: "bg-primary" };
+const SEV_STRIP = { critical: "bg-crit", warning: "bg-[var(--zone-high)]", info: "bg-[var(--zone-medium)]" };
 
 /** Presentational warning: what is wrong, why it matters, and what to do next. */
 export function WarningCard({ w, course, onDismiss, onRead, busy, className }) {

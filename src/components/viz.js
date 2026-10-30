@@ -41,7 +41,7 @@ export function ScoreMeter({ workload, size = "lg" }) {
         <span className={cx("t-num tnum", big ? "text-[5.5rem] sm:text-[7rem]" : "text-[3.5rem]")} role="img" aria-label={`Workload score ${score} out of 100, ${categoryLabel}`}>{score}</span>
         <div className="pb-2 sm:pb-3">
           <p className="t-label">of 100</p>
-          <p className="mt-1.5 inline-flex items-center gap-2 text-sm font-semibold" style={{ color: `var(--zone-${category})` }}>
+          <p className="mt-1.5 inline-flex items-center gap-2 text-sm font-semibold">
             <span className="size-2.5" style={{ background: `var(--zone-${category})` }} aria-hidden />
             {categoryLabel} load
           </p>
@@ -114,7 +114,7 @@ export function Fortnight({ tasks, sessions, prefs, now }) {
     return { d, key, due, planned, avail: prefs.availableDays.includes(d.getDay()) };
   });
   const overdue = open.filter((t) => t.dueDate < todayKey).length;
-  const sq = (t) => (t.dueDate < todayKey ? "bg-crit" : t.type === "exam" || t.type === "test" ? "bg-[var(--zone-high)]" : "bg-primary");
+  const sq = (t) => (t.dueDate < todayKey ? "bg-crit" : t.type === "exam" || t.type === "test" ? "bg-[var(--zone-high)]" : "bg-[var(--zone-low)]");
   return (
     <div>
       <ol className="grid grid-cols-7 gap-px bg-line sm:grid-cols-14">
@@ -137,7 +137,7 @@ export function Fortnight({ tasks, sessions, prefs, now }) {
       </ol>
       <div className="t-small flex flex-wrap gap-x-4 gap-y-1 border-t border-line px-4 py-2.5">
         <span className="inline-flex items-center gap-1.5"><span className="h-2 w-4 bg-[var(--zone-high)]" aria-hidden />Exam or test</span>
-        <span className="inline-flex items-center gap-1.5"><span className="h-2 w-4 bg-primary" aria-hidden />Other deadline</span>
+        <span className="inline-flex items-center gap-1.5"><span className="h-2 w-4 bg-[var(--zone-low)]" aria-hidden />Other deadline</span>
         <span className="inline-flex items-center gap-1.5"><span className="h-3 w-2.5 bg-line-strong" aria-hidden />Planned study</span>
         <span className="inline-flex items-center gap-1.5"><span className="size-3 border border-line bg-surface-2" aria-hidden />Day off</span>
         {overdue ? <span className="font-medium text-crit">{overdue} overdue not shown</span> : null}

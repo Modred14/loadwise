@@ -26,9 +26,9 @@ function Specimen({ children, label = "Example" }) {
 }
 
 const SAMPLE_TASKS = [
-  ["MTH204", "#2f8a5f", "Eigenvalues problem set", "Due in 2 days", "4h"],
-  ["CSC301", "#3d55c7", "Algorithms mid-semester test", "Due tomorrow", "6h"],
-  ["PHY210", "#8a4fb0", "Lab report: Faraday induction", "Due in 3 days", "3h"],
+  ["MTH204", "#6b86e6", "Eigenvalues problem set", "Due in 2 days", "4h"],
+  ["CSC301", "#3a52c4", "Algorithms mid-semester test", "Due tomorrow", "6h"],
+  ["PHY210", "#1f2f8a", "Lab report: Faraday induction", "Due in 3 days", "3h"],
 ];
 const SAMPLE_WEEK = [[1, 2], [2, 3], [1, 1], [3, 2], [2, 1], [0, 0], [1, 0]];
 
@@ -54,7 +54,7 @@ const FEATURES = [
     body: "A 0 to 100 score built from how close your deadlines are, whether the preparation fits your available hours, and how many pile up together. Every score comes with the reasons behind it.",
     specimen: (
       <Specimen>
-        <div className="panel rounded-lg p-4"><div className="flex items-end gap-3"><span className="t-num tnum text-[3.5rem]">64</span><span className="pb-1 text-sm font-semibold" style={{ color: "var(--zone-high)" }}>High load</span></div><LoadRail score={64} className="mt-3" height="2rem" /></div>
+        <div className="panel rounded-lg border border-line-strong p-4"><div className="flex items-end gap-3"><span className="t-num tnum text-[3.5rem]">64</span><span className="pb-1 text-sm font-semibold" style={{ color: "var(--zone-high)" }}>High load</span></div><LoadRail score={64} className="mt-3" height="2rem" /></div>
       </Specimen>
     ),
   },
@@ -73,7 +73,7 @@ const FEATURES = [
             <div key={i} className="bg-surface p-1.5">
               <p className="t-label text-center text-[0.625rem]">{d}</p>
               <div className="mt-1.5 flex min-h-20 flex-col gap-1">
-                {SAMPLE_WEEK[i].map((c, j) => c ? <span key={j} className="block rounded-xs border-l-[3px]" style={{ height: 14 + c * 8, borderColor: ["#3d55c7", "#2f8a5f", "#8a4fb0"][c - 1], background: `color-mix(in srgb, ${["#3d55c7", "#2f8a5f", "#8a4fb0"][c - 1]} 16%, var(--surface))` }} /> : null)}
+                {SAMPLE_WEEK[i].map((c, j) => c ? <span key={j} className="block rounded-xs border-l-[3px]" style={{ height: 14 + c * 8, borderColor: ["#3a52c4", "#6b86e6", "#1f2f8a"][c - 1], background: `color-mix(in srgb, ${["#3a52c4", "#6b86e6", "#1f2f8a"][c - 1]} 16%, var(--surface))` }} /> : null)}
               </div>
             </div>
           ))}
@@ -121,7 +121,7 @@ export default function Home() {
           </div>
 
           <div className="lg:col-span-6">
-            <div className="panel overflow-hidden rounded-lg p-4 pb-5 sm:p-6 sm:pb-7">
+            <div className="panel overflow-hidden rounded-lg border border-line-strong p-4 pb-5 sm:p-6 sm:pb-7">
               <div className="flex items-center justify-between"><p className="t-label">Example fortnight</p><p className="t-label" style={{ color: "var(--zone-high)" }}>Load 78 · High</p></div>
               <div className="-mt-2 sm:-mt-4"><Skyline /></div>
               <LoadRail score={78} height="2.25rem" className="mt-1" />
@@ -140,7 +140,7 @@ export default function Home() {
             <ol className="flex flex-col gap-12 lg:col-span-8">
               {FEATURES.map((f, i) => (
                 <li key={f.title} className="grid gap-x-6 sm:grid-cols-[4rem_1fr]">
-                  <span className="t-num text-[2.75rem] text-[#8b8f97] sm:text-[3.5rem]" aria-hidden>0{i + 1}</span>
+                  <span className="t-num text-[2.75rem] text-line-strong sm:text-[3.5rem]" aria-hidden>0{i + 1}</span>
                   <div className="min-w-0">
                     <h3 className="flex items-center gap-2.5 text-xl font-semibold tracking-tight"><f.icon size={20} className="text-primary" aria-hidden />{f.title}</h3>
                     <p className="mt-2 max-w-xl text-muted">{f.body}</p>
@@ -153,7 +153,7 @@ export default function Home() {
         </section>
 
         {/* Score explorer */}
-        <section id="score" className="panel">
+        <section id="score" className="panel border-y border-line-strong">
           <div className="mx-auto w-full max-w-6xl px-4 py-14 lg:px-8 lg:py-20">
             <p className="t-label">How the score is read</p>
             <h2 className="t-page mt-3 mb-10 max-w-2xl text-balance lg:text-[3rem]">One number, four levels, used everywhere.</h2>

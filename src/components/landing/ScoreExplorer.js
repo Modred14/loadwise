@@ -26,7 +26,7 @@ export default function ScoreExplorer() {
           <output htmlFor="score-range" className="t-num tnum text-[6rem] sm:text-[8rem]" aria-live="polite">{score}</output>
           <div className="pb-3 sm:pb-5">
             <p className="t-label">of 100</p>
-            <p className="mt-2 inline-flex items-center gap-2 text-base font-semibold" style={{ color: `var(--zone-${cat.key})` }}><span className="size-3" style={{ background: `var(--zone-${cat.key})` }} aria-hidden />{cat.label} load</p>
+            <p className="mt-2 inline-flex items-center gap-2 text-base font-semibold"><span className="size-3" style={{ background: `var(--zone-${cat.key})` }} aria-hidden />{cat.label} load</p>
           </div>
         </div>
         <LoadRail score={score} className="mt-6" height="3.25rem" />
@@ -36,7 +36,7 @@ export default function ScoreExplorer() {
         <div className="mt-5 flex flex-wrap gap-2" role="group" aria-label="Jump to a category">
           {CATEGORIES.map((c) => (
             <button key={c.key} type="button" aria-pressed={c.key === cat.key} onClick={() => setScore(Math.round((c.min + c.max) / 2))}
-              className="min-h-11 rounded-md border border-(--panel-line) px-4 text-sm font-medium text-panel-ink transition-colors hover:border-(--signal) aria-pressed:border-(--signal) aria-pressed:bg-(--signal) aria-pressed:text-ink">{c.label}</button>
+              className="min-h-11 rounded-md border border-(--panel-line) px-4 text-sm font-medium text-panel-ink transition-colors hover:border-(--signal) aria-pressed:border-(--signal) aria-pressed:bg-(--signal) aria-pressed:text-white">{c.label}</button>
           ))}
         </div>
       </div>
